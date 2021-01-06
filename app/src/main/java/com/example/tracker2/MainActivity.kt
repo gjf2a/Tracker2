@@ -3,6 +3,7 @@ package com.example.tracker2
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
@@ -41,7 +42,9 @@ class MainActivity : AppCompatActivity() {
         // Set up the listener for take photo button
         camera_capture_button.setOnClickListener { takePhoto() }
 
-        second_button.setOnClickListener { second_button.text = "hi" }
+        second_button.setOnClickListener {
+            Intent(this@MainActivity, ManagerActivity::class.java)
+        }
 
         outputDirectory = getOutputDirectory()
 
