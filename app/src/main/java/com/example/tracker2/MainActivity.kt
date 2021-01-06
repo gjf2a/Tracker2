@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         camera_capture_button.setOnClickListener { takePhoto() }
 
         second_button.setOnClickListener {
-            Intent(this@MainActivity, ManagerActivity::class.java)
+            startActivity(Intent(this@MainActivity, ManagerActivity::class.java))
         }
 
         outputDirectory = getOutputDirectory()
