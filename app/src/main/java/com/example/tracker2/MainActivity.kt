@@ -21,10 +21,20 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 typealias LumaListener = (luma: Double) -> Unit
 
-class MainActivity : AppCompatActivity() {
-    private var imageCapture: ImageCapture? = null
+open class FileAccessActivity : AppCompatActivity() {
 
-    private lateinit var outputDirectory: File
+    protected lateinit var outputDir: File
+
+    protected fun getOutputDirectory(): File {
+        val mediaDir = externalMediaDirs.firstOrNull()?.let {
+            File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
+        return if (mediaDir != null && mediaDir.exists())
+            mediaDir else filesDir
+    }
+}
+
+class MainActivity : FileAccessActivity() {
+    private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +56,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this@MainActivity, ManagerActivity::class.java))
         }
 
-        outputDirectory = getOutputDirectory()
+        outputDir = getOutputDirectory()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
@@ -57,7 +67,7 @@ class MainActivity : AppCompatActivity() {
 
         // Create time-stamped output file to hold the image
         val photoFile = File(
-            outputDirectory,
+            outputDir,
             SimpleDateFormat(FILENAME_FORMAT, Locale.US
             ).format(System.currentTimeMillis()) + ".jpg")
 
@@ -127,13 +137,6 @@ class MainActivity : AppCompatActivity() {
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
             baseContext, it) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun getOutputDirectory(): File {
-        val mediaDir = externalMediaDirs.firstOrNull()?.let {
-            File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
-        return if (mediaDir != null && mediaDir.exists())
-            mediaDir else filesDir
     }
 
     override fun onDestroy() {

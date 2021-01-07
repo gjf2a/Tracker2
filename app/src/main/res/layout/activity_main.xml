@@ -24,7 +24,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginBottom="50dp"
-        android:text="Button 2"
+        android:text="To Manager"
         app:layout_constraintLeft_toLeftOf="@id/camera_capture_button"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
