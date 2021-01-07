@@ -25,7 +25,12 @@ open class FileAccessActivity : AppCompatActivity() {
 
     protected lateinit var outputDir: File
 
-    protected fun getOutputDirectory(): File {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        outputDir = getOutputDirectory();
+    }
+
+    private fun getOutputDirectory(): File {
         val mediaDir = externalMediaDirs.firstOrNull()?.let {
             File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
         return if (mediaDir != null && mediaDir.exists())
@@ -55,8 +60,6 @@ class MainActivity : FileAccessActivity() {
         second_button.setOnClickListener {
             startActivity(Intent(this@MainActivity, ManagerActivity::class.java))
         }
-
-        outputDir = getOutputDirectory()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
