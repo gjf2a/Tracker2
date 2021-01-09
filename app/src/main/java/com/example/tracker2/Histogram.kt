@@ -17,6 +17,12 @@ class Histogram<T> : Iterable<MutableMap.MutableEntry<T,Int>> {
         return get(key).toDouble() / totalCount.toDouble()
     }
 
+    fun distance(other: Histogram<T>): Double {
+        return counts.keys.union(other.counts.keys)
+            .map { squared_diff(portion(it), other.portion(it)) }
+            .sum()
+    }
+
     override fun iterator(): Iterator<MutableMap.MutableEntry<T, Int>> {
         return counts.entries.iterator()
     }

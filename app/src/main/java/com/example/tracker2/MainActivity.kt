@@ -36,7 +36,7 @@ open class FileAccessActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        outputDir = getOutputDirectory();
+        outputDir = getOutputDirectory()
     }
 
     private fun getOutputDirectory(): File {
@@ -208,8 +208,7 @@ private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnal
     }
 }
 
-class BitmapAnalyzer1(converter: YuvBitmapConverter) : ImageAnalysis.Analyzer {
-    val converter: YuvBitmapConverter = converter
+class BitmapAnalyzer1(val converter: YuvBitmapConverter) : ImageAnalysis.Analyzer {
 
     override fun analyze(image: ImageProxy) {
         val bitmap = converter.convert(image.image!!)
@@ -241,7 +240,7 @@ class YuvBitmapConverter(context: Context) {
         script.setInput(incoming)
         script.forEach(outgoing)
 
-        var bitmap = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
         outgoing.copyTo(bitmap)
         return bitmap
     }
@@ -255,7 +254,7 @@ fun yuv420ToByteArray(image: Image): ByteArray {
     val ySize = yBuffer.remaining()
     val uSize = uBuffer.remaining()
     val vSize = vBuffer.remaining()
-    var nv21 = ByteArray(ySize + uSize + vSize)
+    val nv21 = ByteArray(ySize + uSize + vSize)
     yBuffer.get(nv21, 0, ySize)
     vBuffer.get(nv21, ySize, vSize)
     uBuffer.get(nv21, ySize + vSize, uSize)
