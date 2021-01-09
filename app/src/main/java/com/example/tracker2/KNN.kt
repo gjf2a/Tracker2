@@ -1,6 +1,5 @@
 package com.example.tracker2
 
-import java.util.*
 import kotlin.collections.ArrayList
 
 class KNN<T,L>(val distance: (T,T) -> Double, val k: Int) {
