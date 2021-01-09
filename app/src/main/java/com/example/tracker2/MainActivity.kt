@@ -1,11 +1,19 @@
 package com.example.tracker2
 
+// This program is derived from the example given at:
+// https://codelabs.developers.google.com/codelabs/camerax-getting-started
+
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.ImageFormat
+import android.media.Image
 import android.net.Uri
+import android.renderscript.*
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -105,7 +113,7 @@ class MainActivity : FileAccessActivity() {
             val preview = Preview.Builder()
                 .build()
                 .also {
-                    it.setSurfaceProvider(viewFinder.createSurfaceProvider())
+                    it.setSurfaceProvider(viewFinder.surfaceProvider)
                 }
 
             imageCapture = ImageCapture.Builder()
@@ -169,25 +177,73 @@ class MainActivity : FileAccessActivity() {
         }
     }
 
-    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
 
-        private fun ByteBuffer.toByteArray(): ByteArray {
-            rewind()    // Rewind the buffer to zero
-            val data = ByteArray(remaining())
-            get(data)   // Copy the buffer into a byte array
-            return data // Return the byte array
-        }
+}
 
-        override fun analyze(image: ImageProxy) {
+private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
 
-            val buffer = image.planes[0].buffer
-            val data = buffer.toByteArray()
-            val pixels = data.map { it.toInt() and 0xFF }
-            val luma = pixels.average()
-
-            listener(luma)
-
-            image.close()
-        }
+    private fun ByteBuffer.toByteArray(): ByteArray {
+        rewind()    // Rewind the buffer to zero
+        val data = ByteArray(remaining())
+        get(data)   // Copy the buffer into a byte array
+        return data // Return the byte array
     }
+
+    override fun analyze(image: ImageProxy) {
+        Log.i("GJF", "format: ${image.format} (${ImageFormat.YUV_420_888}) planes: ${image.planes.size}")
+        Log.i("GJF", "0: ${image.planes[0].buffer.toByteArray().size}")
+        Log.i("GJF", "1: ${image.planes[1].buffer.toByteArray().size}")
+        Log.i("GJF", "2: ${image.planes[2].buffer.toByteArray().size}")
+        val buffer = image.planes[0].buffer
+        val data = buffer.toByteArray()
+        val pixels = data.map { it.toInt() and 0xFF }
+        val luma = pixels.average()
+
+        listener(luma)
+
+        image.close()
+    }
+}
+
+
+// From https://blog.minhazav.dev/how-to-convert-yuv-420-sp-android.media.Image-to-Bitmap-or-jpeg/
+// My translation into Kotlin
+class YuvBitmapConverter(context: Context) {
+    val rs: RenderScript = RenderScript.create(context)
+    val script = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
+    lateinit var incoming: Allocation
+    lateinit var outgoing: Allocation
+
+    fun convert(image: Image): Bitmap {
+        val yuvBytes = yuv420ToByteArray(image)
+        if (!::incoming.isInitialized) {
+            val yuvType = Type.Builder(rs, Element.U8(rs)).setX(yuvBytes.size)
+            val rgbaType = Type.Builder(rs, Element.RGBA_8888(rs)).setX(image.width).setY(image.height)
+            incoming = Allocation.createTyped(rs, yuvType.create(), Allocation.USAGE_SCRIPT)
+            outgoing = Allocation.createTyped(rs, rgbaType.create(), Allocation.USAGE_SCRIPT)
+        }
+
+        incoming.copyFrom(yuvBytes)
+        script.setInput(incoming)
+        script.forEach(outgoing)
+
+        var bitmap = Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
+        outgoing.copyTo(bitmap)
+        return bitmap
+    }
+}
+
+// Filling in a gap from the example above
+fun yuv420ToByteArray(image: Image): ByteArray {
+    val yBuffer = image.planes[0].buffer
+    val uBuffer = image.planes[1].buffer
+    val vBuffer = image.planes[2].buffer
+    val ySize = yBuffer.remaining()
+    val uSize = uBuffer.remaining()
+    val vSize = vBuffer.remaining()
+    var nv21 = ByteArray(ySize + uSize + vSize)
+    yBuffer.get(nv21, 0, ySize)
+    vBuffer.get(nv21, ySize, vSize)
+    uBuffer.get(nv21, ySize + vSize, uSize)
+    return nv21
 }

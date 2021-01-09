@@ -18,20 +18,32 @@ class FileLoop {
         i %= files.size
     }
 
+    fun empty(): Boolean {
+        return files.size == 0
+    }
+
     fun next() {
-        i = (i + 1) % files.size
+        if (!empty()) i = (i + 1) % files.size
     }
 
     fun prev() {
-        i = (i + files.size - 1) % files.size
+        if (!empty()) i = (i + files.size - 1) % files.size
     }
 
-    fun currentName(): File {
-        return files[i]
+    fun currentName(): String {
+        if (empty()) {
+            return "No files present"
+        } else {
+            return files[i].name
+        }
     }
 
-    fun currentImage(): Bitmap {
-        return BitmapFactory.decodeFile(files[i].toString())
+    fun currentImage(): Bitmap? {
+        if (empty()) {
+            return null
+        } else {
+            return BitmapFactory.decodeFile(files[i].toString())
+        }
     }
 }
 
@@ -54,13 +66,7 @@ class ManagerActivity : FileAccessActivity() {
     }
 
     fun showCurrentFile() {
-        filename_text.text = files.currentName().name
-        current_image.setImageBitmap(files.currentImage())
-    }
-
-    fun showFiles() {
-        for (file in files.files) {
-            Log.i("GJF", "File:" + file.name)
-        }
+        filename_text.text = files.currentName()
+        files.currentImage()?.let { current_image.setImageBitmap(it) }
     }
 }
