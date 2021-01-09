@@ -23,6 +23,12 @@ class Histogram<T> : Iterable<MutableMap.MutableEntry<T,Int>> {
             .sum()
     }
 
+    fun pluralityLabel(): T {
+        assert(!counts.isEmpty())
+        val start = counts.entries.iterator().next()
+        return counts.entries.fold(start, {acc, t -> if (acc.value < t.value) {t} else {acc} }).key
+    }
+
     override fun iterator(): Iterator<MutableMap.MutableEntry<T, Int>> {
         return counts.entries.iterator()
     }
