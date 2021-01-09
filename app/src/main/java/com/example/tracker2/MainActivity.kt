@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.util.concurrent.Executors
 import androidx.camera.core.*
+import androidx.camera.core.CameraX.getContext
 import androidx.camera.lifecycle.ProcessCameraProvider
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
@@ -122,9 +123,11 @@ class MainActivity : FileAccessActivity() {
             val imageAnalyzer = ImageAnalysis.Builder()
                 .build()
                 .also {
-                    it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
+                    // Original
+                    /*it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
                         Log.d(TAG, "Average luminosity: $luma")
-                    })
+                    })*/
+                    it.setAnalyzer(cameraExecutor, BitmapAnalyzer1(YuvBitmapConverter(applicationContext)))
                 }
 
             // Select back camera as a default
@@ -203,6 +206,17 @@ private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnal
 
         image.close()
     }
+}
+
+class BitmapAnalyzer1(converter: YuvBitmapConverter) : ImageAnalysis.Analyzer {
+    val converter: YuvBitmapConverter = converter
+
+    override fun analyze(image: ImageProxy) {
+        val bitmap = converter.convert(image.image!!)
+        Log.i("GJF", "Bitmap: (${bitmap.width}, ${bitmap.height})")
+        image.close()
+    }
+
 }
 
 
