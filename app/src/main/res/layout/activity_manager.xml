@@ -4,6 +4,12 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <ImageView
+        android:id="@+id/current_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
     <Button
         android:id="@+id/left_picture_button"
         android:layout_width="100dp"
@@ -45,15 +51,33 @@
         android:layout_marginBottom="50dp"
         android:text="To Image"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/go_to_project_label"
         app:layout_constraintBottom_toBottomOf="parent"
         android:elevation="2dp"
         />
 
-    <ImageView
-        android:id="@+id/current_image"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <Button
+        android:id="@+id/delete_picture_button"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginBottom="50dp"
+        android:text="Delete Picture"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/right_picture_button"
+        app:layout_constraintBottom_toTopOf="@id/go_to_project_label"
+        android:elevation="2dp"
+        />
+
+    <Button
+        android:id="@+id/go_to_project_label"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginBottom="50dp"
+        android:text="Edit Projects/Labels"
+        app:layout_constraintLeft_toRightOf="@id/go_to_image_button"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:elevation="2dp"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
