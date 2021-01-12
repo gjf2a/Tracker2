@@ -34,6 +34,14 @@ class FileLoop {
         }
     }
 
+    fun currentFile(): File? {
+        return if (empty()) {
+            null
+        } else {
+            files[i]
+        }
+    }
+
     fun currentImage(): Bitmap? {
         return if (empty()) {
             null

@@ -2,7 +2,7 @@ package com.example.tracker2
 
 import java.io.File
 
-class FileManager(val baseDir: File) {
+class FileManager(var baseDir: File) {
     fun allProjects(): List<String> {
         return baseDir.listFiles()!!.filter { it.isDirectory }.map { it.name }
     }
