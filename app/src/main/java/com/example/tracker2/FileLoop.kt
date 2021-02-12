@@ -11,7 +11,9 @@ class FileLoop {
     fun refresh(dir: File) {
         files.clear()
         dir.walkTopDown().filter { it.extension == "jpg" }.toCollection(files)
-        i %= files.size
+        if (files.size > 0) {
+            i %= files.size
+        }
     }
 
     fun empty(): Boolean {

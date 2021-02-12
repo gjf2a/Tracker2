@@ -56,12 +56,20 @@ class ManagerActivity : FileAccessActivity() {
         delete_picture_button.setOnClickListener { files.currentFile()?.delete(); showCurrentFile() }
     }
 
+    private fun safely_string(value: Any?): String {
+        if (value == null) {
+            return "[None]"
+        } else {
+            return value.toString();
+        }
+    }
+
     private fun project_name(): String {
-        return selected_project.selectedItem.toString()
+        return safely_string(selected_project.selectedItem)
     }
 
     private fun label_name(): String {
-        return selected_label.selectedItem.toString()
+        return safely_string(selected_label.selectedItem)
     }
 
     private fun selected_dir(): File {
