@@ -39,6 +39,10 @@ class ManagerActivity : FileAccessActivity() {
             startActivity(Intent(this@ManagerActivity, LabelProjectActivity::class.java))
         }
 
+        robot_runner.setOnClickListener {
+            startActivity(Intent(this@ManagerActivity, RobotControlActivity::class.java))
+        }
+
         view_unclassified.isChecked = true
         view_unclassified.setOnCheckedChangeListener { compoundButton, b -> files.refresh(if (b) {outputDir} else {selected_dir()}) }
 
