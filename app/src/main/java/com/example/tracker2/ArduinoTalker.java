@@ -185,21 +185,4 @@ public class ArduinoTalker {
         Log.i(TAG, "Send complete; " + bytesSent + " bytes sent");
         return bytesSent;
     }
-
-    public byte[] receive(final int numBytesExpected) {
-        BufferedTalker receivedData = new BufferedTalker(numBytesExpected);
-        byte[] buffer = new byte[numBytesExpected];
-        while (!receivedData.finished()) {
-            Log.i(TAG,"Trying to receive more data");
-            int bytesReceived = transfer(device2Host, buffer, "Receive");
-            if (bytesReceived < 0) {
-                Log.i(TAG,"Returning empty byte array");
-                return new byte[0];
-            }
-            Log.i(TAG, "Updating data");
-            receivedData.updateWith(bytesReceived, buffer, numBytesExpected);
-        }
-        Log.i(TAG, "Received all expected bytes");
-        return receivedData.getReceived();
-    }
 }

@@ -44,6 +44,4 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
 // CameraX View class
     implementation 'androidx.camera:camera-view:1.0.0-alpha20'
-
-    implementation 'com.github.mik3y:usb-serial-for-android:3.3.0'
 }
