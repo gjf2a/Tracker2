@@ -10,20 +10,20 @@ import kotlinx.android.synthetic.main.activity_robot_control.*
 import java.lang.Exception
 
 
-const val START_BYTE: Byte = -1
-const val STOP_BYTE: Byte = -2
+const val START: String = "start"
+const val STOP: String = "stop"
 
 
-class RobotControlActivity : AppCompatActivity(), LineListener {
+class RobotControlActivity : AppCompatActivity(), TextListener {
     lateinit var talker: ArduinoTalker
-    lateinit var reader: LineReader
+    lateinit var reader: TextReader
 
     private fun makeConnection() {
         log.append("Attempting to connect...\n")
         talker = ArduinoTalker(this@RobotControlActivity.getSystemService(Context.USB_SERVICE) as UsbManager)
         if (talker.connected()) {
             log.append("Connected\n")
-            reader = LineReader(talker)
+            reader = TextReader(talker)
             reader.addListener(this)
             reader.start()
         } else {
@@ -44,26 +44,25 @@ class RobotControlActivity : AppCompatActivity(), LineListener {
             makeConnection()
         }
 
-        start_robot.setOnClickListener { safeSend(START_BYTE, "Starting robot") }
-        stop_robot.setOnClickListener { safeSend(STOP_BYTE, "Stopping robot") }
+        start_robot.setOnClickListener { safeSend(START) }
+        stop_robot.setOnClickListener { safeSend(STOP) }
 
         makeConnection()
     }
 
-    private fun safeSend(b: Byte, msg: String = "") {
+    private fun safeSend(msg: String) {
         try {
-            talker.sendOneByte(b)
-            if (msg.isNotEmpty()) {
-                log.append(msg + '\n')
+            if (talker.sendString(msg)) {
+                log.append(">$msg\n")
             }
         } catch (e: Exception) {
-            log.append("Exception when sending $b: $e\n")
+            log.append("Exception when sending '$msg': $e\n")
         }
     }
 
-    override fun receive(line: String) {
+    override fun receive(text: String) {
         this@RobotControlActivity.runOnUiThread {
-            log.append(line)
+            log.append(text)
             scroller.post { scroller.fullScroll(View.FOCUS_DOWN) }
         }
     }

@@ -2,11 +2,11 @@ package com.example.tracker2
 
 const val BUFFER_SIZE = 200;
 
-class LineReader(var talker: ArduinoTalker) : Thread() {
+class TextReader(var talker: ArduinoTalker) : Thread() {
     var buffer = ByteArray(BUFFER_SIZE)
-    var listeners = ArrayList<LineListener>()
+    var listeners = ArrayList<TextListener>()
 
-    fun addListener(listener: LineListener) {
+    fun addListener(listener: TextListener) {
         listeners.add(listener)
     }
 
@@ -23,6 +23,6 @@ class LineReader(var talker: ArduinoTalker) : Thread() {
     }
 }
 
-interface LineListener {
-    fun receive(line: String)
+interface TextListener {
+    fun receive(text: String)
 }

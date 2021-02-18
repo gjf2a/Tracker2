@@ -190,4 +190,12 @@ public class ArduinoTalker {
         byte[] bytes = new byte[]{b};
         return send(bytes) == 1;
     }
+
+    public boolean sendString(String s) {
+        if (!s.endsWith("\n")) {
+            s += "\n";
+        }
+        Log.i(TAG, "Sending: '" + s + "'");
+        return send(s.getBytes()) == s.length();
+    }
 }
