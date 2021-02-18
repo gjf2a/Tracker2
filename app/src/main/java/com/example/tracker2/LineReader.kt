@@ -12,10 +12,12 @@ class LineReader(var talker: ArduinoTalker) : Thread() {
 
     override fun run() {
         while (true) {
-            talker.transfer(talker.device2Host, buffer, "Receive")
-            val line = String(buffer)
-            for (listener in listeners) {
-                listener.receive(line)
+            val received = talker.transfer(talker.device2Host, buffer, "Receive")
+            if (received > 0) {
+                val line = String(buffer.copyOfRange(0, received))
+                for (listener in listeners) {
+                    listener.receive(line)
+                }
             }
         }
     }
