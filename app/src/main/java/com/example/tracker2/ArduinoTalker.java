@@ -185,4 +185,9 @@ public class ArduinoTalker {
         Log.i(TAG, "Send complete; " + bytesSent + " bytes sent");
         return bytesSent;
     }
+
+    public boolean sendOneByte(byte b) {
+        byte[] bytes = new byte[]{b};
+        return send(bytes) == 1;
+    }
 }
