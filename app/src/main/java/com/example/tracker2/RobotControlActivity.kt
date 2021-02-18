@@ -44,15 +44,18 @@ class RobotControlActivity : AppCompatActivity(), LineListener {
             makeConnection()
         }
 
-        start_robot.setOnClickListener { safeSend(START_BYTE) }
-        stop_robot.setOnClickListener { safeSend(STOP_BYTE) }
+        start_robot.setOnClickListener { safeSend(START_BYTE, "Starting robot") }
+        stop_robot.setOnClickListener { safeSend(STOP_BYTE, "Stopping robot") }
 
         makeConnection()
     }
 
-    private fun safeSend(b: Byte) {
+    private fun safeSend(b: Byte, msg: String = "") {
         try {
             talker.sendOneByte(b)
+            if (msg.isNotEmpty()) {
+                log.append(msg + '\n')
+            }
         } catch (e: Exception) {
             log.append("Exception when sending $b: $e\n")
         }
