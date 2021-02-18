@@ -17,6 +17,7 @@
         android:layout_height="100dp"/>
 
     <ScrollView
+        android:id="@+id/scroller"
         android:layout_width="0dp"
         app:layout_constraintWidth_default="percent"
         app:layout_constraintWidth_percent=".7"

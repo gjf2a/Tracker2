@@ -21,9 +21,8 @@ public class ArduinoTalker {
     private UsbDevice device;
     private UsbInterface usbInterface;
     private UsbDeviceConnection connection;
-    private UsbEndpoint host2Device, device2Host;
+    public UsbEndpoint host2Device, device2Host;
     private String statusMessage = "ok";
-
     private static final String TAG = ArduinoTalker.class.getSimpleName();
 
     // From https://github.com/felHR85/UsbSerial/blob/master/usbserial/src/main/java/com/felhr/usbserial/CDCSerialDevice.java
@@ -149,9 +148,7 @@ public class ArduinoTalker {
 
     private byte[] copyDefaultLineCoding() {
         byte[] bytes = new byte[CDC_DEFAULT_LINE_CODING.length];
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = CDC_DEFAULT_LINE_CODING[i];
-        }
+        System.arraycopy(CDC_DEFAULT_LINE_CODING, 0, bytes, 0, bytes.length);
         return bytes;
     }
 
@@ -161,8 +158,8 @@ public class ArduinoTalker {
         connection.close();
     }
 
-    private int transfer(UsbEndpoint endpoint, byte[] bytes, String label) {
-        Long time = System.currentTimeMillis();
+    public int transfer(UsbEndpoint endpoint, byte[] bytes, String label) {
+        long time = System.currentTimeMillis();
         Log.i(TAG, "Opened " + label + " connection" + "Attempting:");
         int result = connection.bulkTransfer(endpoint, bytes, bytes.length, 50);
         Log.i(TAG, "Closed connection; code " + result + ",  Time taken: " + (System.currentTimeMillis() - time));
