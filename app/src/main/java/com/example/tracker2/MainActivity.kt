@@ -11,17 +11,19 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
+import android.hardware.usb.UsbManager
 import android.media.Image
 import android.net.Uri
 import android.renderscript.*
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.util.concurrent.Executors
 import androidx.camera.core.*
-import androidx.camera.core.CameraX.getContext
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.nio.ByteBuffer
@@ -29,6 +31,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 typealias LumaListener = (luma: Double) -> Unit
+
+const val START: String = "start"
+const val STOP: String = "stop"
 
 open class FileAccessActivity : AppCompatActivity() {
 
@@ -47,14 +52,13 @@ open class FileAccessActivity : AppCompatActivity() {
     }
 }
 
-class MainActivity : FileAccessActivity() {
-    private var imageCapture: ImageCapture? = null
-    private lateinit var cameraExecutor: ExecutorService
+open class CameraUsingActivity : FileAccessActivity() {
+    var imageCapture: ImageCapture? = null
+    lateinit var cameraExecutor: ExecutorService
+    lateinit var view: PreviewView
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
+    fun cameraSetup(myView: PreviewView) {
+        view = myView
         // Request camera permissions
         if (allPermissionsGranted()) {
             startCamera()
@@ -63,44 +67,7 @@ class MainActivity : FileAccessActivity() {
                 this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
 
-        // Set up the listener for take photo button
-        camera_capture_button.setOnClickListener { takePhoto() }
-
-        second_button.setOnClickListener {
-            startActivity(Intent(this@MainActivity, ManagerActivity::class.java))
-        }
-
         cameraExecutor = Executors.newSingleThreadExecutor()
-    }
-
-    private fun takePhoto() {
-        // Get a stable reference of the modifiable image capture use case
-        val imageCapture = imageCapture ?: return
-
-        // Create time-stamped output file to hold the image
-        val photoFile = File(
-            outputDir,
-            SimpleDateFormat(FILENAME_FORMAT, Locale.US
-            ).format(System.currentTimeMillis()) + ".jpg")
-
-        // Create output options object which contains file + metadata
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        // Set up image capture listener, which is triggered after photo has
-        // been taken
-        imageCapture.takePicture(
-            outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                }
-
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val savedUri = Uri.fromFile(photoFile)
-                    val msg = "Photo capture succeeded: $savedUri"
-                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                    Log.d(TAG, msg)
-                }
-            })
     }
 
     private fun startCamera() {
@@ -114,7 +81,7 @@ class MainActivity : FileAccessActivity() {
             val preview = Preview.Builder()
                 .build()
                 .also {
-                    it.setSurfaceProvider(viewFinder.surfaceProvider)
+                    it.setSurfaceProvider(view.surfaceProvider)
                 }
 
             imageCapture = ImageCapture.Builder()
@@ -148,7 +115,7 @@ class MainActivity : FileAccessActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+    fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
             baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
@@ -159,10 +126,10 @@ class MainActivity : FileAccessActivity() {
     }
 
     companion object {
-        private const val TAG = "CameraXBasic"
-        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-        private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+        const val TAG = "CameraXBasic"
+        const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+        const val REQUEST_CODE_PERMISSIONS = 10
+        val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 
     override fun onRequestPermissionsResult(
@@ -179,6 +146,93 @@ class MainActivity : FileAccessActivity() {
             }
         }
     }
+}
+
+class MainActivity : CameraUsingActivity(), TextListener {
+    lateinit var talker: ArduinoTalker
+    lateinit var reader: TextReader
+
+    private fun makeConnection() {
+        log.append("Attempting to connect...\n")
+        talker = ArduinoTalker(this@MainActivity.getSystemService(Context.USB_SERVICE) as UsbManager)
+        if (talker.connected()) {
+            log.append("Connected\n")
+            reader = TextReader(talker)
+            reader.addListener(this)
+            reader.start()
+        } else {
+            log.append("Not connected\n")
+        }
+    }
+
+    private fun safeSend(msg: String) {
+        try {
+            if (talker.sendString(msg)) {
+                log.append(">$msg\n")
+            }
+        } catch (e: Exception) {
+            log.append("Exception when sending '$msg': $e\n")
+        }
+    }
+
+    override fun receive(text: String) {
+        this@MainActivity.runOnUiThread {
+            log.append(text)
+            scroller.post { scroller.fullScroll(View.FOCUS_DOWN) }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        cameraSetup(viewFinder)
+
+        // Set up the listener for take photo button
+        camera_capture_button.setOnClickListener { takePhoto() }
+
+        to_manager_button.setOnClickListener {
+            startActivity(Intent(this@MainActivity, ManagerActivity::class.java))
+        }
+
+        log.append("Log\n")
+
+        start_robot.setOnClickListener { safeSend(START) }
+        stop_robot.setOnClickListener { safeSend(STOP) }
+
+        makeConnection()
+    }
+
+    private fun takePhoto() {
+        // Get a stable reference of the modifiable image capture use case
+        val imageCapture = imageCapture ?: return
+
+        // Create time-stamped output file to hold the image
+        val photoFile = File(
+            outputDir,
+            SimpleDateFormat(FILENAME_FORMAT, Locale.US
+            ).format(System.currentTimeMillis()) + ".jpg")
+
+        // Create output options object which contains file + metadata
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        // Set up image capture listener, which is triggered after photo has
+        // been taken
+        imageCapture.takePicture(
+            outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                }
+
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    val savedUri = Uri.fromFile(photoFile)
+                    val msg = "Photo capture succeeded: $savedUri"
+                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, msg)
+                }
+            })
+    }
+
 
 
 }
