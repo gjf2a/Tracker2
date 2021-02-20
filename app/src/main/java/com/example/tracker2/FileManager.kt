@@ -1,10 +1,33 @@
 package com.example.tracker2
 
+import android.util.Log
 import java.io.File
+
+const val PROJECT_PREFIX = "project"
+const val LABEL_PREFIX = "label"
+
+fun nextNameFrom(items: List<String>, prefix: String): String {
+    val sorted = items.filter { it.startsWith(prefix) }.sorted()
+    Log.i("FileManager", "$sorted")
+    return if (sorted.isEmpty()) {
+        "${prefix}1"
+    } else {
+        val number = Integer.parseInt(sorted.last().substring(prefix.length)) + 1
+        "${prefix}${number}"
+    }
+}
 
 class FileManager(var baseDir: File) {
     fun allProjects(): List<String> {
         return baseDir.listFiles()!!.filter { it.isDirectory }.map { it.name }
+    }
+
+    fun makeProjectName(): String {
+        return nextNameFrom(allProjects(), PROJECT_PREFIX)
+    }
+
+    fun makeLabelName(project: String): String {
+        return nextNameFrom(allLabelsIn(project), LABEL_PREFIX)
     }
 
     fun projectExists(projectName: String): Boolean {
@@ -31,6 +54,8 @@ class FileManager(var baseDir: File) {
         if (!projectExists(projectName)) {
             val newProject = File(baseDir, projectName)
             newProject.mkdir()
+            addLabel(projectName, makeLabelName(projectName))
+            addLabel(projectName, makeLabelName(projectName))
         }
     }
 

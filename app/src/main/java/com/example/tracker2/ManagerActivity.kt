@@ -18,6 +18,10 @@ class ManagerActivity : FileAccessActivity() {
 
         files.refresh(outputDir)
         manager = FileManager(outputDir)
+        if (manager.allProjects().isEmpty()) {
+            manager.addProject(manager.makeProjectName())
+        }
+
         showCurrentFile()
 
         selected_project.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, manager.allProjects())
