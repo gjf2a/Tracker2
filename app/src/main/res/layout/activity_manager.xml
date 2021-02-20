@@ -86,8 +86,8 @@
         android:layout_height="100dp"
         android:layout_marginBottom="50dp"
         android:text="Move To"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/selected_label"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         android:elevation="2dp"
         />
 
@@ -110,7 +110,7 @@
         android:layout_marginBottom="50dp"
         android:text="Delete Picture"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/right_picture_button"
+        app:layout_constraintTop_toBottomOf="@id/move_picture_button"
         app:layout_constraintBottom_toTopOf="@id/go_to_project_label"
         android:elevation="2dp"
         />
