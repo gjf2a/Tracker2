@@ -15,22 +15,36 @@ class LabelProjectActivity : FileAccessActivity() {
 
         manager = FileManager(outputDir)
 
-        current_project.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, manager.allProjects())
-        current_label.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, manager.allLabelsIn(projectName()))
+        refreshSpinners()
 
         back_to_manager_button.setOnClickListener {
             startActivity(Intent(this@LabelProjectActivity, ManagerActivity::class.java))
         }
 
-        new_project_button.setOnClickListener { manager.addProject(manager.makeProjectName()) }
+        new_project_button.setOnClickListener {
+            manager.addProject(manager.makeProjectName())
+            refreshSpinners()
+        }
 
         new_label_button.setOnClickListener {
             manager.addLabel(projectName(), manager.makeLabelName(projectName()))
+            refreshSpinners()
         }
 
-        delete_project_button.setOnClickListener { manager.deleteProject(projectName()) }
+        delete_project_button.setOnClickListener {
+            manager.deleteProject(projectName())
+            refreshSpinners()
+        }
 
-        delete_label_button.setOnClickListener { manager.deleteLabel(projectName(), labelName()) }
+        delete_label_button.setOnClickListener {
+            manager.deleteLabel(projectName(), labelName())
+            refreshSpinners()
+        }
+    }
+
+    private fun refreshSpinners() {
+        current_project.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, manager.allProjects())
+        current_label.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, manager.allLabelsIn(projectName()))
     }
 
     private fun projectName(): String {
