@@ -44,23 +44,33 @@ class ManagerActivity : FileAccessActivity() {
         }
 
         view_unclassified.isChecked = true
-        view_unclassified.setOnCheckedChangeListener { compoundButton, b -> files.refresh(if (b) {outputDir} else {selected_dir()}) }
+        view_unclassified.setOnCheckedChangeListener { _, b -> refreshFiles(b) }
 
         left_picture_button.setOnClickListener { files.prev(); showCurrentFile() }
         right_picture_button.setOnClickListener { files.next(); showCurrentFile() }
 
-        pick_view.setOnClickListener { files.refresh(selected_dir()) }
+        pick_view.setOnClickListener { files.refresh(selectedDir()); showCurrentFile() }
 
         move_picture_button.setOnClickListener {
             if (files.currentFile() != null) {
-                manager.moveFileTo(files.currentFile()!!, project_name(), label_name())
+                manager.moveFileTo(files.currentFile()!!, projectName(), labelName())
+                refreshFiles(view_unclassified.isChecked)
             }
         }
 
         delete_picture_button.setOnClickListener { files.currentFile()?.delete(); showCurrentFile() }
     }
 
-    private fun safely_string(value: Any?): String {
+    private fun viewingDir(viewingUnclassified: Boolean): File {
+        return if (viewingUnclassified) {outputDir} else {selectedDir()}
+    }
+
+    private fun refreshFiles(viewingUnclassified: Boolean) {
+        files.refresh(viewingDir(viewingUnclassified))
+        showCurrentFile()
+    }
+
+    private fun safelyString(value: Any?): String {
         if (value == null) {
             return "[None]"
         } else {
@@ -68,22 +78,22 @@ class ManagerActivity : FileAccessActivity() {
         }
     }
 
-    private fun project_name(): String {
-        return safely_string(selected_project.selectedItem)
+    private fun projectName(): String {
+        return safelyString(selected_project.selectedItem)
     }
 
-    private fun label_name(): String {
-        return safely_string(selected_label.selectedItem)
+    private fun labelName(): String {
+        return safelyString(selected_label.selectedItem)
     }
 
-    private fun selected_dir(): File {
-        return manager.labelDir(project_name(), label_name())
+    private fun selectedDir(): File {
+        return manager.labelDir(projectName(), labelName())
     }
 
-    fun showCurrentFile() {
-        filename_text.text = files.currentName()
+    private fun showCurrentFile() {
+        filename_text.text = "${viewingDir(view_unclassified.isChecked).toString()}; ${files.currentName()}"
         if (files.currentImage() == null) {
-            current_image.setImageResource(android.R.color.black)
+            current_image.setImageResource(android.R.color.darker_gray)
         } else {
             current_image.setImageBitmap(files.currentImage())
         }
