@@ -84,4 +84,12 @@ class FileManager(var baseDir: File) {
         val allGone = projectDir(projectName).listFiles()!!.all {println("Trying to delete ${it}");  deleteLabel(projectName, it.name) }
         return allGone && projectDir(projectName).delete()
     }
+
+    fun renameProject(oldName: String, newName: String) {
+        projectDir(oldName).renameTo(projectDir(newName))
+    }
+
+    fun renameLabel(projectName: String, oldName: String, newName: String) {
+        labelDir(projectName, oldName).renameTo(labelDir(projectName, newName))
+    }
 }

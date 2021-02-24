@@ -26,6 +26,22 @@ class LabelProjectActivity : FileAccessActivity() {
             refreshSpinners()
         }
 
+        rename_project_button.setOnClickListener {
+            if (update_project_name.text.isNotEmpty()) {
+                manager.renameProject(projectName(), update_project_name.text.toString())
+                update_project_name.text.clear()
+                refreshSpinners()
+            }
+        }
+
+        rename_label_button.setOnClickListener {
+            if (update_label_name.text.isNotEmpty()) {
+                manager.renameLabel(projectName(), labelName(), update_label_name.text.toString())
+                update_label_name.text.clear()
+                refreshSpinners()
+            }
+        }
+
         new_label_button.setOnClickListener {
             manager.addLabel(projectName(), manager.makeLabelName(projectName()))
             refreshSpinners()

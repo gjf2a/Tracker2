@@ -64,7 +64,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginBottom="50dp"
-        android:text="Rename Project"
+        android:text="Rename Label"
         app:layout_constraintLeft_toRightOf="@id/update_label_name"
         app:layout_constraintTop_toBottomOf="@id/rename_project_button"
         android:elevation="2dp"
