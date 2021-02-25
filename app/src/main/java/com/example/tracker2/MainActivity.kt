@@ -127,8 +127,10 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
                 if (command.isNotEmpty() && command[0] == "cv") {
                     if (command.size == 4 && command[1] == "knn") {
                         val k = Integer.parseInt(command[2])
-                        analyzer.classifier =
-                            KnnClassifier(talker, k, command[3], FileManager(outputDir))
+                        val knn = KnnClassifier(talker, k, command[3], FileManager(outputDir))
+                        analyzer.classifier = knn
+                        Log.i(TAG, "Number of examples: ${knn.numExamples()}")
+                        analyzer.resetFPSCalculation()
                         talker.sendString("Activating kNN classifer; k=$k; project=${command[3]}")
                     } else if (command.size == 2 && command[1] == "off") {
                         analyzer.classifier = DummyClassifier()
@@ -279,25 +281,34 @@ fun min(x: Int, y: Int): Int {
     return if (x < y) {x} else {y}
 }
 
+const val TARGET_WIDTH = 20;
+const val TARGET_HEIGHT = 15;
+
 fun bitmapSSD(img1: Bitmap, img2: Bitmap): Double {
-    Log.i("bitmapSSD", "img1: (${img1.width}, ${img1.height}) img2: (${img2.width}, ${img2.height})")
-    var sum = 0.0
-    for (x in 0 until min(img1.width, img2.width)) {
-        for (y in 0 until min(img1.height, img2.height)) {
-            sum += singlePixelSSD(img1.getPixel(x, y), img2.getPixel(x, y))
+    val resized1 = Bitmap.createScaledBitmap(img1, TARGET_WIDTH, TARGET_HEIGHT, false)
+    val resized2 = Bitmap.createScaledBitmap(img2, TARGET_WIDTH, TARGET_HEIGHT, false)
+    var sum = 0
+    for (x in 0 until resized1.width) {
+        for (y in 0 until resized1.height) {
+            sum += singlePixelSSD(resized1.getPixel(x, y), resized2.getPixel(x, y))
         }
     }
-    return sum
+    return sum.toDouble()
 }
 
 fun get8bits(color: Int, rightShift: Int): Int {
     return (color shr rightShift) and 0xff
 }
 
-fun singlePixelSSD(color1: Int, color2: Int): Double {
-    var sum = 0.0
+fun squaredDiffInt(c1: Int, c2: Int): Int {
+    val diff = c1 - c2;
+    return diff * diff
+}
+
+fun singlePixelSSD(color1: Int, color2: Int): Int {
+    var sum = 0
     for (rightShift in 0..24 step 8) {
-        sum += squared_diff(get8bits(color1, rightShift), get8bits(color2, rightShift))
+        sum += squaredDiffInt(get8bits(color1, rightShift), get8bits(color2, rightShift))
     }
     return sum
 }
@@ -317,20 +328,43 @@ class KnnClassifier(val talker: ArduinoTalker, k: Int, projectName: String, file
     }
 
     override fun classify(image: Bitmap) {
+        Log.i("KnnClassifier", "About to classify")
         val label = knn.labelFor(image)
         Log.i("KnnClassifier", label)
         talker.sendString(label)
+    }
+
+    fun numExamples(): Int {
+        return knn.numExamples()
     }
 }
 
 class BitmapAnalyzer1(val converter: YuvBitmapConverter, val complaintsTo: MessageReceiver) : ImageAnalysis.Analyzer {
     var classifier: BitmapClassifier = DummyClassifier()
+    var frameCount: Long = 0
+    var startTime: Long = 0
+
+    init {
+        resetFPSCalculation()
+    }
+
+    fun resetFPSCalculation() {
+        frameCount = 0
+        startTime = System.currentTimeMillis()
+    }
+
+    fun currentFPS(): Double {
+        val elapsedTime = System.currentTimeMillis() - startTime
+        return 1000 * frameCount.toDouble() / elapsedTime.toDouble()
+    }
 
     override fun analyze(image: ImageProxy) {
         try {
             val bitmap = converter.convert(image.image!!)
-            Log.i("GJF", "Bitmap: (${bitmap.width}, ${bitmap.height})")
+            Log.i("BitmapAnalyzer1", "Bitmap: (${bitmap.width}, ${bitmap.height})")
             classifier.classify(bitmap)
+            frameCount += 1
+            Log.i("BitmapAnalyzer1", "FPS: ${currentFPS()}")
         } catch (e: java.lang.Exception) {
             Log.i("BitmapAnalyzer1", "Exception when classifying: $e")
             e.printStackTrace()

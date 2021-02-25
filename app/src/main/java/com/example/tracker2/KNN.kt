@@ -18,7 +18,11 @@ class KNN<T,L>(val distance: (T,T) -> Double, val k: Int) {
         return votes.pluralityLabel()
     }
 
-    fun numToCheck(): Int {
+    private fun numToCheck(): Int {
         return if (k < examples.size) {k} else {examples.size}
+    }
+
+    fun numExamples(): Int {
+        return examples.size
     }
 }

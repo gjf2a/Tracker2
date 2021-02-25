@@ -37,7 +37,8 @@ fun rgbDistance(c1: Int, c2: Int): Double {
 }
 
 fun squared_diff(c1: Int, c2: Int): Double {
-    return squared_diff(c1.toDouble(), c2.toDouble())
+    val diff = c1 - c2;
+    return (diff * diff).toDouble()
 }
 
 fun squared_diff(c1: Double, c2: Double): Double {
