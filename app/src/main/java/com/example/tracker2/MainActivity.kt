@@ -50,11 +50,129 @@ open class FileAccessActivity : AppCompatActivity() {
     }
 }
 
-open class CameraUsingActivity : FileAccessActivity() {
+interface MessageReceiver {
+    fun message(msg: String)
+}
+
+class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
     var imageCapture: ImageCapture? = null
     lateinit var cameraExecutor: ExecutorService
     lateinit var view: PreviewView
     lateinit var analyzer: BitmapAnalyzer1
+    lateinit var talker: ArduinoTalker
+    lateinit var reader: TextReader
+    var incoming = MessageHolder()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        cameraSetup(viewFinder)
+
+        // Set up the listener for take photo button
+        camera_capture_button.setOnClickListener { takePhoto() }
+
+        to_manager_button.setOnClickListener {
+            startActivity(Intent(this@MainActivity, ManagerActivity::class.java))
+        }
+
+        log.append("Log\n")
+
+        start_robot.setOnClickListener { safeSend(START) }
+        stop_robot.setOnClickListener { safeSend(STOP) }
+
+        tester.setOnClickListener { findCommandsIn("cv knn 3 Gameroom\n") }
+
+        makeConnection()
+    }
+
+    private fun makeConnection() {
+        log.append("Attempting to connect...\n")
+        talker = ArduinoTalker(this@MainActivity.getSystemService(Context.USB_SERVICE) as UsbManager)
+        if (talker.connected()) {
+            log.append("Connected\n")
+            reader = TextReader(talker)
+            reader.addListener(this)
+            reader.start()
+        } else {
+            log.append("Not connected\n")
+        }
+    }
+
+    private fun safeSend(msg: String) {
+        try {
+            if (talker.sendString(msg)) {
+                log.append(">$msg\n")
+            }
+        } catch (e: Exception) {
+            Log.i("MainActivity", "Exception when sending '$msg': $e")
+            log.append("Exception when sending '$msg': $e\n")
+        }
+    }
+
+    override fun receive(text: String) {
+        this@MainActivity.runOnUiThread {
+            findCommandsIn(text)
+            log.append(text)
+            scroller.post { scroller.fullScroll(View.FOCUS_DOWN) }
+        }
+    }
+
+    private fun findCommandsIn(text: String) {
+        try {
+            incoming.receive(text)
+            for (message in incoming) {
+                Log.i("MainActivity", "Processing '$message'")
+                val command = message.trim().split(" ")
+                if (command.isNotEmpty() && command[0] == "cv") {
+                    if (command.size == 4 && command[1] == "knn") {
+                        val k = Integer.parseInt(command[2])
+                        analyzer.classifier =
+                            KnnClassifier(talker, k, command[3], FileManager(outputDir))
+                        talker.sendString("Activating kNN classifer; k=$k; project=${command[3]}")
+                    } else if (command.size == 2 && command[1] == "off") {
+                        analyzer.classifier = DummyClassifier()
+                        talker.sendString("Deactivating classifier")
+                    } else {
+                        talker.sendString("Unrecognized cv cmd: '$text'")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.i("MainActivity", "Exception receiving '$text': $e")
+            log.append("Exception when receiving '$text': $e\n")
+        }
+    }
+
+    private fun takePhoto() {
+        // Get a stable reference of the modifiable image capture use case
+        val imageCapture = imageCapture ?: return
+
+        // Create time-stamped output file to hold the image
+        val photoFile = File(
+            outputDir,
+            SimpleDateFormat(FILENAME_FORMAT, Locale.US
+            ).format(System.currentTimeMillis()) + ".jpg")
+
+        // Create output options object which contains file + metadata
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        // Set up image capture listener, which is triggered after photo has
+        // been taken
+        imageCapture.takePicture(
+            outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                }
+
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    val savedUri = Uri.fromFile(photoFile)
+                    val msg = "Photo capture succeeded: $savedUri"
+                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, msg)
+                }
+            })
+    }
 
     fun cameraSetup(myView: PreviewView) {
         view = myView
@@ -86,7 +204,7 @@ open class CameraUsingActivity : FileAccessActivity() {
             imageCapture = ImageCapture.Builder()
                 .build()
 
-            analyzer = BitmapAnalyzer1(YuvBitmapConverter(applicationContext))
+            analyzer = BitmapAnalyzer1(YuvBitmapConverter(applicationContext), this)
 
             val imageAnalyzer = ImageAnalysis.Builder()
                 .build()
@@ -143,117 +261,9 @@ open class CameraUsingActivity : FileAccessActivity() {
             }
         }
     }
-}
 
-class MainActivity : CameraUsingActivity(), TextListener {
-    lateinit var talker: ArduinoTalker
-    lateinit var reader: TextReader
-    var incoming = MessageHolder()
-
-    private fun makeConnection() {
-        log.append("Attempting to connect...\n")
-        talker = ArduinoTalker(this@MainActivity.getSystemService(Context.USB_SERVICE) as UsbManager)
-        if (talker.connected()) {
-            log.append("Connected\n")
-            reader = TextReader(talker)
-            reader.addListener(this)
-            reader.start()
-        } else {
-            log.append("Not connected\n")
-        }
-    }
-
-    private fun safeSend(msg: String) {
-        try {
-            if (talker.sendString(msg)) {
-                log.append(">$msg\n")
-            }
-        } catch (e: Exception) {
-            log.append("Exception when sending '$msg': $e\n")
-        }
-    }
-
-    override fun receive(text: String) {
-        this@MainActivity.runOnUiThread {
-            findCommandsIn(text)
-            log.append(text)
-            scroller.post { scroller.fullScroll(View.FOCUS_DOWN) }
-        }
-    }
-
-    private fun findCommandsIn(text: String) {
-        try {
-            incoming.receive(text)
-            for (message in incoming) {
-                val command = message.trim().split(" ")
-                if (command.isNotEmpty() && command[0] == "cv") {
-                    if (command.size == 4 && command[1] == "knn") {
-                        val k = Integer.parseInt(command[2])
-                        analyzer.classifier =
-                            KnnClassifier(talker, k, command[3], FileManager(outputDir))
-                        talker.sendString("Activating kNN classifer; k=$k; project=${command[3]}")
-                    } else if (command.size == 2 && command[1] == "off") {
-                        analyzer.classifier = DummyClassifier()
-                        talker.sendString("Deactivating classifier")
-                    } else {
-                        talker.sendString("Unrecognized cv cmd: '$text'")
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            log.append("Exception when receiving '$text': $e\n")
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        cameraSetup(viewFinder)
-
-        // Set up the listener for take photo button
-        camera_capture_button.setOnClickListener { takePhoto() }
-
-        to_manager_button.setOnClickListener {
-            startActivity(Intent(this@MainActivity, ManagerActivity::class.java))
-        }
-
-        log.append("Log\n")
-
-        start_robot.setOnClickListener { safeSend(START) }
-        stop_robot.setOnClickListener { safeSend(STOP) }
-
-        makeConnection()
-    }
-
-    private fun takePhoto() {
-        // Get a stable reference of the modifiable image capture use case
-        val imageCapture = imageCapture ?: return
-
-        // Create time-stamped output file to hold the image
-        val photoFile = File(
-            outputDir,
-            SimpleDateFormat(FILENAME_FORMAT, Locale.US
-            ).format(System.currentTimeMillis()) + ".jpg")
-
-        // Create output options object which contains file + metadata
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        // Set up image capture listener, which is triggered after photo has
-        // been taken
-        imageCapture.takePicture(
-            outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                }
-
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val savedUri = Uri.fromFile(photoFile)
-                    val msg = "Photo capture succeeded: $savedUri"
-                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                    Log.d(TAG, msg)
-                }
-            })
+    override fun message(msg: String) {
+        log.append(msg.trim() + '\n')
     }
 }
 
@@ -265,10 +275,15 @@ class DummyClassifier : BitmapClassifier {
     override fun classify(image: Bitmap) {}
 }
 
+fun min(x: Int, y: Int): Int {
+    return if (x < y) {x} else {y}
+}
+
 fun bitmapSSD(img1: Bitmap, img2: Bitmap): Double {
+    Log.i("bitmapSSD", "img1: (${img1.width}, ${img1.height}) img2: (${img2.width}, ${img2.height})")
     var sum = 0.0
-    for (x in 0 until img1.width) {
-        for (y in 0 until img1.height) {
+    for (x in 0 until min(img1.width, img2.width)) {
+        for (y in 0 until min(img1.height, img2.height)) {
             sum += singlePixelSSD(img1.getPixel(x, y), img2.getPixel(x, y))
         }
     }
@@ -302,18 +317,27 @@ class KnnClassifier(val talker: ArduinoTalker, k: Int, projectName: String, file
     }
 
     override fun classify(image: Bitmap) {
-        talker.sendString(knn.labelFor(image))
+        val label = knn.labelFor(image)
+        Log.i("KnnClassifier", label)
+        talker.sendString(label)
     }
 }
 
-class BitmapAnalyzer1(val converter: YuvBitmapConverter) : ImageAnalysis.Analyzer {
+class BitmapAnalyzer1(val converter: YuvBitmapConverter, val complaintsTo: MessageReceiver) : ImageAnalysis.Analyzer {
     var classifier: BitmapClassifier = DummyClassifier()
 
     override fun analyze(image: ImageProxy) {
-        val bitmap = converter.convert(image.image!!)
-        Log.i("GJF", "Bitmap: (${bitmap.width}, ${bitmap.height})")
-        classifier.classify(bitmap)
-        image.close()
+        try {
+            val bitmap = converter.convert(image.image!!)
+            Log.i("GJF", "Bitmap: (${bitmap.width}, ${bitmap.height})")
+            classifier.classify(bitmap)
+        } catch (e: java.lang.Exception) {
+            Log.i("BitmapAnalyzer1", "Exception when classifying: $e")
+            e.printStackTrace()
+            complaintsTo.message("Exception when classifying: $e")
+        } finally {
+            image.close()
+        }
     }
 
 }

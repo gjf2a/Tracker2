@@ -8,6 +8,17 @@
     tools:context=".MainActivity">
 
     <Button
+        android:id="@+id/tester"
+        android:text="Test"
+        android:layout_height="0dp"
+        android:layout_width="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/start_robot"
+        app:layout_constraintWidth_percent=".1"
+        app:layout_constraintHeight_percent=".25"
+        />
+
+    <Button
         android:id="@+id/start_robot"
         android:text="Start"
         android:background="@android:color/holo_green_light"
