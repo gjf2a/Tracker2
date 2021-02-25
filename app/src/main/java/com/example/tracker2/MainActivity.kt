@@ -10,7 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.ImageFormat
+import android.graphics.BitmapFactory
 import android.hardware.usb.UsbManager
 import android.media.Image
 import android.net.Uri
@@ -26,11 +26,9 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
-import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
-typealias LumaListener = (luma: Double) -> Unit
 
 const val START: String = "start"
 const val STOP: String = "stop"
@@ -56,6 +54,7 @@ open class CameraUsingActivity : FileAccessActivity() {
     var imageCapture: ImageCapture? = null
     lateinit var cameraExecutor: ExecutorService
     lateinit var view: PreviewView
+    lateinit var analyzer: BitmapAnalyzer1
 
     fun cameraSetup(myView: PreviewView) {
         view = myView
@@ -87,14 +86,12 @@ open class CameraUsingActivity : FileAccessActivity() {
             imageCapture = ImageCapture.Builder()
                 .build()
 
+            analyzer = BitmapAnalyzer1(YuvBitmapConverter(applicationContext))
+
             val imageAnalyzer = ImageAnalysis.Builder()
                 .build()
                 .also {
-                    // Original
-                    /*it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-                        Log.d(TAG, "Average luminosity: $luma")
-                    })*/
-                    it.setAnalyzer(cameraExecutor, BitmapAnalyzer1(YuvBitmapConverter(applicationContext)))
+                    it.setAnalyzer(cameraExecutor, analyzer)
                 }
 
             // Select back camera as a default
@@ -151,6 +148,7 @@ open class CameraUsingActivity : FileAccessActivity() {
 class MainActivity : CameraUsingActivity(), TextListener {
     lateinit var talker: ArduinoTalker
     lateinit var reader: TextReader
+    var incoming = MessageHolder()
 
     private fun makeConnection() {
         log.append("Attempting to connect...\n")
@@ -177,8 +175,33 @@ class MainActivity : CameraUsingActivity(), TextListener {
 
     override fun receive(text: String) {
         this@MainActivity.runOnUiThread {
+            findCommandsIn(text)
             log.append(text)
             scroller.post { scroller.fullScroll(View.FOCUS_DOWN) }
+        }
+    }
+
+    private fun findCommandsIn(text: String) {
+        try {
+            incoming.receive(text)
+            for (message in incoming) {
+                val command = message.trim().split(" ")
+                if (command.isNotEmpty() && command[0] == "cv") {
+                    if (command.size == 4 && command[1] == "knn") {
+                        val k = Integer.parseInt(command[2])
+                        analyzer.classifier =
+                            KnnClassifier(talker, k, command[3], FileManager(outputDir))
+                        talker.sendString("Activating kNN classifer; k=$k; project=${command[3]}")
+                    } else if (command.size == 2 && command[1] == "off") {
+                        analyzer.classifier = DummyClassifier()
+                        talker.sendString("Deactivating classifier")
+                    } else {
+                        talker.sendString("Unrecognized cv cmd: '$text'")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            log.append("Exception when receiving '$text': $e\n")
         }
     }
 
@@ -232,41 +255,64 @@ class MainActivity : CameraUsingActivity(), TextListener {
                 }
             })
     }
-
-
-
 }
 
-private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
+interface BitmapClassifier {
+    fun classify(image: Bitmap)
+}
 
-    private fun ByteBuffer.toByteArray(): ByteArray {
-        rewind()    // Rewind the buffer to zero
-        val data = ByteArray(remaining())
-        get(data)   // Copy the buffer into a byte array
-        return data // Return the byte array
+class DummyClassifier : BitmapClassifier {
+    override fun classify(image: Bitmap) {}
+}
+
+fun bitmapSSD(img1: Bitmap, img2: Bitmap): Double {
+    var sum = 0.0
+    for (x in 0 until img1.width) {
+        for (y in 0 until img1.height) {
+            sum += singlePixelSSD(img1.getPixel(x, y), img2.getPixel(x, y))
+        }
+    }
+    return sum
+}
+
+fun get8bits(color: Int, rightShift: Int): Int {
+    return (color shr rightShift) and 0xff
+}
+
+fun singlePixelSSD(color1: Int, color2: Int): Double {
+    var sum = 0.0
+    for (rightShift in 0..24 step 8) {
+        sum += squared_diff(get8bits(color1, rightShift), get8bits(color2, rightShift))
+    }
+    return sum
+}
+
+class KnnClassifier(val talker: ArduinoTalker, k: Int, projectName: String, files: FileManager) : BitmapClassifier {
+    var knn: KNN<Bitmap,String> = KNN(::bitmapSSD, k)
+
+    init {
+        for (label in files.projectDir(projectName).listFiles()!!) {
+            if (label.isDirectory) {
+                for (imageFile in label.listFiles()!!.filter { it.extension == "jpg" }) {
+                    val bitmap = BitmapFactory.decodeFile(imageFile.path)
+                    knn.addExample(bitmap, label.name)
+                }
+            }
+        }
     }
 
-    override fun analyze(image: ImageProxy) {
-        Log.i("GJF", "format: ${image.format} (${ImageFormat.YUV_420_888}) planes: ${image.planes.size}")
-        Log.i("GJF", "0: ${image.planes[0].buffer.toByteArray().size}")
-        Log.i("GJF", "1: ${image.planes[1].buffer.toByteArray().size}")
-        Log.i("GJF", "2: ${image.planes[2].buffer.toByteArray().size}")
-        val buffer = image.planes[0].buffer
-        val data = buffer.toByteArray()
-        val pixels = data.map { it.toInt() and 0xFF }
-        val luma = pixels.average()
-
-        listener(luma)
-
-        image.close()
+    override fun classify(image: Bitmap) {
+        talker.sendString(knn.labelFor(image))
     }
 }
 
 class BitmapAnalyzer1(val converter: YuvBitmapConverter) : ImageAnalysis.Analyzer {
+    var classifier: BitmapClassifier = DummyClassifier()
 
     override fun analyze(image: ImageProxy) {
         val bitmap = converter.convert(image.image!!)
         Log.i("GJF", "Bitmap: (${bitmap.width}, ${bitmap.height})")
+        classifier.classify(bitmap)
         image.close()
     }
 
@@ -276,8 +322,8 @@ class BitmapAnalyzer1(val converter: YuvBitmapConverter) : ImageAnalysis.Analyze
 // From https://blog.minhazav.dev/how-to-convert-yuv-420-sp-android.media.Image-to-Bitmap-or-jpeg/
 // My translation into Kotlin
 class YuvBitmapConverter(context: Context) {
-    val rs: RenderScript = RenderScript.create(context)
-    val script = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
+    private val rs: RenderScript = RenderScript.create(context)
+    private val script: ScriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
     lateinit var incoming: Allocation
     lateinit var outgoing: Allocation
 

@@ -2,7 +2,10 @@ package com.example.tracker2
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Spinner
 import kotlinx.android.synthetic.main.activity_label_project.*
 import java.io.File
 
@@ -21,6 +24,21 @@ class LabelProjectActivity : FileAccessActivity() {
             startActivity(Intent(this@LabelProjectActivity, ManagerActivity::class.java))
         }
 
+        current_project.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View,
+                position: Int,
+                id: Long
+            ) {
+                refreshSpinnerFrom(current_label, manager.allLabelsIn(parent.getItemAtPosition(position).toString()))
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // another interface callback
+            }
+        }
+
         new_project_button.setOnClickListener {
             manager.addProject(manager.makeProjectName())
             refreshSpinners()
@@ -28,7 +46,7 @@ class LabelProjectActivity : FileAccessActivity() {
 
         rename_project_button.setOnClickListener {
             if (update_project_name.text.isNotEmpty()) {
-                manager.renameProject(projectName(), update_project_name.text.toString())
+                manager.renameProject(projectName(), despacify(update_project_name.text.toString()))
                 update_project_name.text.clear()
                 refreshSpinners()
             }
@@ -36,7 +54,7 @@ class LabelProjectActivity : FileAccessActivity() {
 
         rename_label_button.setOnClickListener {
             if (update_label_name.text.isNotEmpty()) {
-                manager.renameLabel(projectName(), labelName(), update_label_name.text.toString())
+                manager.renameLabel(projectName(), labelName(), despacify(update_label_name.text.toString()))
                 update_label_name.text.clear()
                 refreshSpinners()
             }
@@ -59,8 +77,12 @@ class LabelProjectActivity : FileAccessActivity() {
     }
 
     private fun refreshSpinners() {
-        current_project.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, manager.allProjects())
-        current_label.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, manager.allLabelsIn(projectName()))
+        refreshSpinnerFrom(current_project, manager.allProjects())
+        refreshSpinnerFrom(current_label, manager.allLabelsIn(projectName()))
+    }
+
+    private fun refreshSpinnerFrom(spinner: Spinner, items: List<String>) {
+        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, items)
     }
 
     private fun projectName(): String {
@@ -74,4 +96,8 @@ class LabelProjectActivity : FileAccessActivity() {
     private fun selectedDir(): File {
         return manager.labelDir(projectName(), labelName())
     }
+}
+
+fun despacify(s: String): String {
+    return s.replace(' ', '_').replace('\n', '_')
 }
