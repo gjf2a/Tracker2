@@ -277,10 +277,6 @@ class DummyClassifier : BitmapClassifier {
     override fun classify(image: Bitmap) {}
 }
 
-fun min(x: Int, y: Int): Int {
-    return if (x < y) {x} else {y}
-}
-
 const val TARGET_WIDTH = 20;
 const val TARGET_HEIGHT = 15;
 
