@@ -77,11 +77,14 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
         }
 
         log.append("Log\n")
+        log.append("CPUS: ${Runtime.getRuntime().availableProcessors()}\n")
 
         start_robot.setOnClickListener { safeSend(START) }
         stop_robot.setOnClickListener { safeSend(STOP) }
 
-        tester.setOnClickListener { findCommandsIn("cv knn 3 Gameroom\n") }
+        tester.setOnClickListener {
+            findCommandsIn("cv knn 3 Gameroom 20 15\n")
+        }
 
         makeConnection()
     }
@@ -121,20 +124,53 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
     private fun findCommandsIn(text: String) {
         try {
             incoming.receive(text)
+            val manager = FileManager(outputDir)
             for (message in incoming) {
                 Log.i("MainActivity", "Processing '$message'")
                 val command = message.trim().split(" ")
                 if (command.isNotEmpty() && command[0] == "cv") {
-                    if (command.size == 4 && command[1] == "knn") {
+                    if (command.size == 6 && command[1] == "knn") {
                         val k = Integer.parseInt(command[2])
-                        val knn = KnnClassifier(talker, k, command[3], FileManager(outputDir))
-                        analyzer.classifier = knn
-                        Log.i(TAG, "Number of examples: ${knn.numExamples()}")
-                        analyzer.resetFPSCalculation()
-                        talker.sendString("Activating kNN classifer; k=$k; project=${command[3]}")
-                    } else if (command.size == 2 && command[1] == "off") {
-                        analyzer.classifier = DummyClassifier()
+                        val project = command[3]
+                        if (manager.projectExists(project)) {
+                            val width = Integer.parseInt(command[4])
+                            val height = Integer.parseInt(command[5])
+                            val knn = KnnClassifier(talker, k, project, manager, width, height)
+                            val id = analyzer.addClassifier(knn)
+                            Log.i(TAG, "Number of examples: ${knn.numExamples()}")
+                            analyzer.resetFPSCalculation()
+                            log.append("Activating kNN classifer; k=$k; project=$project")
+                            talker.sendString("$id")
+                        } else {
+                            log.append("Project $project does not exist")
+                        }
+                    } else if (command.size == 7 && command[1] == "knn_brief") {
+                        val k = Integer.parseInt(command[2])
+                        val project = command[3]
+                        if (manager.projectExists(project)) {
+                            val width = Integer.parseInt(command[4])
+                            val height = Integer.parseInt(command[5])
+                            val numPairs = Integer.parseInt(command[6])
+                            val knn = KnnBriefClassifier(talker, k, project, manager, width, height, numPairs)
+                            val id = analyzer.addClassifier(knn)
+                            analyzer.resetFPSCalculation()
+                            log.append("Activating BRIEF kNN classifier; k=$k; project = $project; numPairs = $numPairs")
+                            talker.sendString("$id")
+                        } else {
+                            log.append("Project $project does not exist")
+                        }
+                    } else if (command.size == 2 && command[1] == "pause") {
+                        analyzer.currentClassifier = 0
                         talker.sendString("Deactivating classifier")
+                        log.append("Classifier paused; FPS ${analyzer.currentFPS()}")
+                    } else if (command.size == 3 && command[1] == "resume") {
+                        val id = Integer.parseInt(command[2])
+                        if (id >= analyzer.classifiers.size || id < 0) {
+                            talker.sendString("Id $id not valid")
+                        } else {
+                            analyzer.currentClassifier = id
+                            analyzer.resetFPSCalculation()
+                        }
                     } else {
                         talker.sendString("Unrecognized cv cmd: '$text'")
                     }
@@ -142,6 +178,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
             }
         } catch (e: Exception) {
             Log.i("MainActivity", "Exception receiving '$text': $e")
+            e.printStackTrace()
             log.append("Exception when receiving '$text': $e\n")
         }
     }
@@ -277,71 +314,21 @@ class DummyClassifier : BitmapClassifier {
     override fun classify(image: Bitmap) {}
 }
 
-const val TARGET_WIDTH = 20;
-const val TARGET_HEIGHT = 15;
-
-fun bitmapSSD(img1: Bitmap, img2: Bitmap): Double {
-    val resized1 = Bitmap.createScaledBitmap(img1, TARGET_WIDTH, TARGET_HEIGHT, false)
-    val resized2 = Bitmap.createScaledBitmap(img2, TARGET_WIDTH, TARGET_HEIGHT, false)
-    var sum = 0
-    for (x in 0 until resized1.width) {
-        for (y in 0 until resized1.height) {
-            sum += singlePixelSSD(resized1.getPixel(x, y), resized2.getPixel(x, y))
-        }
-    }
-    return sum.toDouble()
-}
-
-fun get8bits(color: Int, rightShift: Int): Int {
-    return (color shr rightShift) and 0xff
-}
-
-fun squaredDiffInt(c1: Int, c2: Int): Int {
-    val diff = c1 - c2;
-    return diff * diff
-}
-
-fun singlePixelSSD(color1: Int, color2: Int): Int {
-    var sum = 0
-    for (rightShift in 0..24 step 8) {
-        sum += squaredDiffInt(get8bits(color1, rightShift), get8bits(color2, rightShift))
-    }
-    return sum
-}
-
-class KnnClassifier(val talker: ArduinoTalker, k: Int, projectName: String, files: FileManager) : BitmapClassifier {
-    var knn: KNN<Bitmap,String> = KNN(::bitmapSSD, k)
-
-    init {
-        for (label in files.projectDir(projectName).listFiles()!!) {
-            if (label.isDirectory) {
-                for (imageFile in label.listFiles()!!.filter { it.extension == "jpg" }) {
-                    val bitmap = BitmapFactory.decodeFile(imageFile.path)
-                    knn.addExample(bitmap, label.name)
-                }
-            }
-        }
-    }
-
-    override fun classify(image: Bitmap) {
-        Log.i("KnnClassifier", "About to classify")
-        val label = knn.labelFor(image)
-        Log.i("KnnClassifier", label)
-        talker.sendString(label)
-    }
-
-    fun numExamples(): Int {
-        return knn.numExamples()
-    }
-}
-
 class BitmapAnalyzer1(val converter: YuvBitmapConverter, val complaintsTo: MessageReceiver) : ImageAnalysis.Analyzer {
-    var classifier: BitmapClassifier = DummyClassifier()
+    var classifiers = ArrayList<BitmapClassifier>()
+    var currentClassifier = 0
     var frameCount: Long = 0
     var startTime: Long = 0
 
     init {
+        classifiers.add(DummyClassifier())
         resetFPSCalculation()
+    }
+
+    fun addClassifier(b: BitmapClassifier): Int {
+        classifiers.add(b)
+        currentClassifier = classifiers.size - 1
+        return currentClassifier
     }
 
     fun resetFPSCalculation() {
@@ -358,7 +345,7 @@ class BitmapAnalyzer1(val converter: YuvBitmapConverter, val complaintsTo: Messa
         try {
             val bitmap = converter.convert(image.image!!)
             Log.i("BitmapAnalyzer1", "Bitmap: (${bitmap.width}, ${bitmap.height})")
-            classifier.classify(bitmap)
+            classifiers.get(currentClassifier).classify(bitmap)
             frameCount += 1
             Log.i("BitmapAnalyzer1", "FPS: ${currentFPS()}")
         } catch (e: java.lang.Exception) {

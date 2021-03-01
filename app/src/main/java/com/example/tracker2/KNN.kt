@@ -2,8 +2,8 @@ package com.example.tracker2
 
 import kotlin.collections.ArrayList
 
-class KNN<T,L>(val distance: (T,T) -> Double, val k: Int) {
-    val examples = ArrayList<Pair<T,L>>()
+class KNN<T,L,D: Comparable<D>>(val distance: (T,T) -> D, val k: Int) {
+    private val examples = ArrayList<Pair<T,L>>()
 
     fun addExample(example: T, label: L) {
         examples.add(Pair(example,label))
