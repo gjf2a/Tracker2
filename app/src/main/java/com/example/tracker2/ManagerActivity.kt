@@ -43,6 +43,10 @@ class ManagerActivity : FileAccessActivity() {
             startActivity(Intent(this@ManagerActivity, LabelProjectActivity::class.java))
         }
 
+        go_to_test_button.setOnClickListener {
+            startActivity(Intent(this@ManagerActivity, TestActivity::class.java))
+        }
+
         view_unclassified.isChecked = true
         view_unclassified.setOnCheckedChangeListener { _, b -> refreshFiles(b) }
 

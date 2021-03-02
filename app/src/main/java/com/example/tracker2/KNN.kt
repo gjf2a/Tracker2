@@ -1,5 +1,7 @@
 package com.example.tracker2
 
+import java.lang.StringBuilder
+import java.util.*
 import kotlin.collections.ArrayList
 
 class KNN<T,L,D: Comparable<D>>(val distance: (T,T) -> D, val k: Int) {
@@ -24,5 +26,40 @@ class KNN<T,L,D: Comparable<D>>(val distance: (T,T) -> D, val k: Int) {
 
     fun numExamples(): Int {
         return examples.size
+    }
+
+    private fun without(example: T): KNN<T,L,D> {
+        val result = KNN<T,L,D>(distance, k)
+        result.examples.addAll(examples.filter { it.first != example })
+        return result
+    }
+
+    fun assess(): ConfusionMatrix<L> {
+        val result = ConfusionMatrix<L>()
+        for (example in examples) {
+            val tester = without(example.first)
+            result.resultFor(example.second, tester.labelFor(example.first))
+        }
+        return result
+    }
+}
+
+class ConfusionMatrix<L> {
+    var numCorrectFor = Histogram<L>()
+    var numIncorrectFor = Histogram<L>()
+    var labels = TreeSet<L>()
+
+    fun resultFor(target: L, predicted: L) {
+        labels.add(target)
+        labels.add(predicted)
+        if (target == predicted) {numCorrectFor} else {numIncorrectFor}.bump(target)
+    }
+
+    fun summary(): String {
+        var result = StringBuilder()
+        for (label in labels) {
+            result.append("${label.toString()}: ${Ratio(numCorrectFor.get(label), numCorrectFor.get(label) + numIncorrectFor.get(label)).format()}\n")
+        }
+        return result.toString()
     }
 }

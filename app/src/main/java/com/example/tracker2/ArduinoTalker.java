@@ -15,7 +15,7 @@ import java.util.Map;
  * Created by gabriel on 5/25/18.
  */
 
-public class ArduinoTalker {
+public class ArduinoTalker implements MessageTarget {
     private boolean deviceOk = false;
     private UsbManager usbManager;
     private UsbDevice device;

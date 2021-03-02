@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import java.util.*
 
-class KnnBriefClassifier(val talker: ArduinoTalker, k: Int, projectName: String, files: FileManager,
+class KnnBriefClassifier(val talker: MessageTarget, k: Int, projectName: String, files: FileManager,
                          val scaleWidth: Int, val scaleHeight: Int, val numPairs: Int) : BitmapClassifier {
     var knn: KNN<BRIEFDescriptor,String,Int> = KNN(::BRIEFdistance, k)
 
@@ -22,6 +22,10 @@ class KnnBriefClassifier(val talker: ArduinoTalker, k: Int, projectName: String,
     override fun classify(image: Bitmap) {
         val label = knn.labelFor(BRIEFDescriptor(numPairs, Bitmap.createScaledBitmap(image, scaleWidth, scaleHeight, false)))
         talker.sendString(label)
+    }
+
+    override fun assess(): String {
+        return knn.assess().summary()
     }
 
 }

@@ -31,7 +31,7 @@ fun singlePixelSSD(color1: Int, color2: Int): Long {
     return sum
 }
 
-class KnnClassifier(val talker: ArduinoTalker, k: Int, projectName: String, files: FileManager, val scaleWidth: Int, val scaleHeight: Int) : BitmapClassifier {
+class KnnClassifier(val talker: MessageTarget, k: Int, projectName: String, files: FileManager, val scaleWidth: Int, val scaleHeight: Int) : BitmapClassifier {
     var knn: KNN<Bitmap,String,Long> = KNN(::bitmapSSD, k)
 
     init {
@@ -50,6 +50,10 @@ class KnnClassifier(val talker: ArduinoTalker, k: Int, projectName: String, file
         val label = knn.labelFor(Bitmap.createScaledBitmap(image, scaleWidth, scaleHeight, false))
         Log.i("KnnClassifier", label)
         talker.sendString(label)
+    }
+
+    override fun assess(): String {
+        return knn.assess().summary()
     }
 
     fun numExamples(): Int {
