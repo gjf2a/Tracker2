@@ -2,6 +2,16 @@ package com.example.tracker2
 
 import java.io.File
 
+// I don't know why it gets stray "cv" text at the start, but this is meant to compensate for it.
+fun suffixStartingWith(suffixStart: String, msg: String): String {
+    for (i in msg.length - suffixStart.length downTo 0) {
+        if (msg.substring(i, i + suffixStart.length) == suffixStart) {
+            return msg.substring(i)
+        }
+    }
+    return msg
+}
+
 interface MessageTarget {
     fun sendString(msg: String): Boolean
 }
@@ -14,7 +24,7 @@ data class InterpreterResult(val cmdType: CommandType, val classifier: BitmapCla
 
 fun interpret(msg: String, outputDir: File, talker: MessageTarget): InterpreterResult {
     val manager = FileManager(outputDir)
-    val command = msg.trim().split(" ")
+    val command = suffixStartingWith("cv ", msg.trim()).split(" ")
     if (command.isNotEmpty() && command[0] == "cv") {
         if (command.size == 6 && command[1] == "knn") {
             val k = Integer.parseInt(command[2])

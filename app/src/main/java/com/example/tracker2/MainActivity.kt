@@ -81,10 +81,6 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
         start_robot.setOnClickListener { safeSend(START) }
         stop_robot.setOnClickListener { safeSend(STOP) }
 
-        /*tester.setOnClickListener {
-            findCommandsIn("cv knn 3 Gameroom 20 15\n")
-        }*/
-
         makeConnection()
     }
 
