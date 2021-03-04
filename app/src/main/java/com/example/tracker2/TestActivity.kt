@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.view.View
 import kotlinx.android.synthetic.main.activity_test.*
 
-class DummyMessage : MessageTarget {
+class DummyTarget : MessageTarget {
     override fun sendString(msg: String): Boolean {
         return true
     }
@@ -35,7 +35,7 @@ class TestActivity : FileAccessActivity() {
 
         run_test.setOnClickListener {
             log_test.append("Interpreting...\n")
-            val result = interpret(command_tester.text.toString(), outputDir, DummyMessage())
+            val result = interpret(command_tester.text.toString(), outputDir, DummyTarget())
             log_test.append(result.cmdType.toString() + '\n')
             log_test.append(result.msg + '\n')
             if (result.cmdType == CommandType.CREATE_CLASSIFIER) {

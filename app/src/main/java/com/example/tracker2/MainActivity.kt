@@ -58,7 +58,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
     lateinit var cameraExecutor: ExecutorService
     lateinit var view: PreviewView
     lateinit var analyzer: BitmapAnalyzer1
-    lateinit var talker: ArduinoTalker
+    var talker: MessageTarget = DummyTarget()
     lateinit var reader: TextReader
     var incoming = MessageHolder()
 
@@ -81,21 +81,24 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
         start_robot.setOnClickListener { safeSend(START) }
         stop_robot.setOnClickListener { safeSend(STOP) }
 
-        /*val intent = getIntent()
-        if (intent.extras!!.containsKey(COMMAND_FLAG)) {
-            val command = intent.extras!!.get(COMMAND_FLAG)
-            // TODO: Start up the classifier from the command.
-        }*/
+        val intentHasCommand = intent.extras?.containsKey(COMMAND_FLAG)
+        Log.i("MainActivity", "intentHasCommand: $intentHasCommand")
+        if (intentHasCommand != null && intentHasCommand) {
+            val command = intent.extras?.get(COMMAND_FLAG).toString()
+            Log.i("MainActivity", "command: $command")
+            incoming.receive("${command.trim()}\n")
+        }
 
         makeConnection()
     }
 
     private fun makeConnection() {
         log.append("Attempting to connect...\n")
-        talker = ArduinoTalker(this@MainActivity.getSystemService(Context.USB_SERVICE) as UsbManager)
-        if (talker.connected()) {
+        val arduino = ArduinoTalker(this@MainActivity.getSystemService(Context.USB_SERVICE) as UsbManager)
+        if (arduino.connected()) {
+            reader = TextReader(arduino)
+            talker = arduino
             log.append("Connected\n")
-            reader = TextReader(talker)
             reader.addListener(this)
             reader.start()
         } else {
@@ -116,8 +119,9 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
 
     override fun receive(text: String) {
         this@MainActivity.runOnUiThread {
-            findCommandsIn(text)
             log.append(text)
+            incoming.receive(text)
+            scanForCommands()
             scroller.post { scroller.fullScroll(View.FOCUS_DOWN) }
         }
     }
@@ -129,10 +133,8 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
         talker.sendString("$id")
     }
 
-    private fun findCommandsIn(text: String) {
+    private fun scanForCommands() {
         try {
-            incoming.receive(text)
-            val manager = FileManager(outputDir)
             for (message in incoming) {
                 Log.i("MainActivity", "Processing '$message'")
                 val interpreted = interpret(message, outputDir, talker)
@@ -157,9 +159,9 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
                 }
             }
         } catch (e: Exception) {
-            Log.i("MainActivity", "Exception receiving '$text': $e")
+            Log.i("MainActivity", "Exception when scanning for commands: $e")
             e.printStackTrace()
-            log.append("Exception when receiving '$text': $e\n")
+            log.append("Exception when scanning for commands:: $e\n")
         }
     }
 
@@ -245,6 +247,8 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
+
+            scanForCommands()
 
         }, ContextCompat.getMainExecutor(this))
     }
