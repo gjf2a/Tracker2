@@ -20,8 +20,10 @@
         android:id="@+id/command_tester"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_width="400dp"
-        android:layout_height="50dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".4"
+        app:layout_constraintHeight_percent=".2"
         />
 
     <Button
@@ -29,16 +31,31 @@
         android:text="Test Classifier"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/command_tester"
-        android:layout_width="100dp"
-        android:layout_height="100dp"/>
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".2"/>
 
     <Button
         android:id="@+id/test_to_manager"
         android:text="To Manager"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/run_test"
-        android:layout_width="100dp"
-        android:layout_height="100dp"/>
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".2"/>
+
+    <Button
+        android:id="@+id/test_to_robot"
+        android:text="Robot View"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/test_to_manager"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".2"
+        />
 
     <ScrollView
         android:id="@+id/scroller_test"

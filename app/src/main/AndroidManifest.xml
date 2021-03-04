@@ -13,9 +13,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".TestActivity"></activity>
-        <activity android:name=".RobotControlActivity" />
-        <activity android:name=".ManagerActivity">
+        <activity android:name=".TestActivity" android:screenOrientation="landscape"/>
+        <activity android:name=".ManagerActivity" android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,8 +27,8 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />
         </activity>
-        <activity android:name=".MainActivity" />
-        <activity android:name=".LabelProjectActivity" />
+        <activity android:name=".MainActivity" android:screenOrientation="landscape"/>
+        <activity android:name=".LabelProjectActivity" android:screenOrientation="landscape"/>
     </application>
 
 </manifest>

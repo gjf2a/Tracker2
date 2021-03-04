@@ -81,6 +81,12 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
         start_robot.setOnClickListener { safeSend(START) }
         stop_robot.setOnClickListener { safeSend(STOP) }
 
+        /*val intent = getIntent()
+        if (intent.extras!!.containsKey(COMMAND_FLAG)) {
+            val command = intent.extras!!.get(COMMAND_FLAG)
+            // TODO: Start up the classifier from the command.
+        }*/
+
         makeConnection()
     }
 

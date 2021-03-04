@@ -32,11 +32,11 @@
 
     <Button
         android:id="@+id/to_manager_button"
+        android:layout_height="0dp"
         android:layout_width="0dp"
         app:layout_constraintWidth_percent=".1"
         app:layout_constraintHeight_percent=".25"
         android:background="@android:color/holo_purple"
-        android:layout_height="0dp"
         android:text="To Manager"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/stop_robot"
@@ -45,9 +45,10 @@
 
     <Button
         android:id="@+id/camera_capture_button"
+        android:layout_height="0dp"
         android:layout_width="0dp"
         app:layout_constraintWidth_percent=".1"
-        android:layout_height="100dp"
+        app:layout_constraintHeight_percent=".25"
         android:scaleType="fitCenter"
         android:text="Take Photo"
         android:background="@android:color/holo_orange_light"
