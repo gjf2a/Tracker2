@@ -46,17 +46,23 @@ class LabelProjectActivity : FileAccessActivity() {
 
         rename_project_button.setOnClickListener {
             if (update_project_name.text.isNotEmpty()) {
-                manager.renameProject(projectName(), despacify(update_project_name.text.toString()))
+                val newName = despacify(update_project_name.text.toString())
+                if (newName.isNotEmpty()) {
+                    manager.renameProject(projectName(), newName)
+                    refreshSpinners()
+                }
                 update_project_name.text.clear()
-                refreshSpinners()
             }
         }
 
         rename_label_button.setOnClickListener {
             if (update_label_name.text.isNotEmpty()) {
-                manager.renameLabel(projectName(), labelName(), despacify(update_label_name.text.toString()))
+                val newName = despacify(update_label_name.text.toString())
+                if (newName.isNotEmpty()) {
+                    manager.renameLabel(projectName(), labelName(), newName)
+                    refreshSpinners()
+                }
                 update_label_name.text.clear()
-                refreshSpinners()
             }
         }
 
@@ -99,5 +105,5 @@ class LabelProjectActivity : FileAccessActivity() {
 }
 
 fun despacify(s: String): String {
-    return s.replace(' ', '_').replace('\n', '_')
+    return s.trim().replace(' ', '_').replace('\n', '_')
 }
