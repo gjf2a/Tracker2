@@ -8,7 +8,6 @@ const val LABEL_PREFIX = "label"
 
 fun nextNameFrom(items: List<String>, prefix: String): String {
     val sorted = items.filter { it.startsWith(prefix) }.sorted()
-    Log.i("FileManager", "$sorted")
     return if (sorted.isEmpty()) {
         "${prefix}1"
     } else {
@@ -77,6 +76,7 @@ class FileManager(var baseDir: File) {
 
     fun deleteLabel(projectName: String, label: String): Boolean {
         val allGone = labelDir(projectName, label).listFiles()!!.all {println("Trying to delete ${it}"); it.delete() }
+        println("allGone: $allGone")
         return allGone && labelDir(projectName, label).delete()
     }
 

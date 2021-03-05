@@ -83,8 +83,10 @@ class UnitTests {
         val movedDummy = File(manager.labelDir(projectName, label1), dummyFile.name)
         assert(movedDummy.exists())
         assert(!dummyFile.exists())
-        val line = Scanner(movedDummy).nextLine()
+        val dummyScanner = Scanner(movedDummy)
+        val line = dummyScanner.nextLine()
         assert(line == filetext1)
+        dummyScanner.close()
 
         val writer2 = PrintWriter(FileWriter(dummyFile))
         writer2.println(filetext2)
