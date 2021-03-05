@@ -248,6 +248,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
                 Log.e(TAG, "Use case binding failed", exc)
             }
 
+            // TODO: I am sure this was a bad idea. Find a better place to do this.
             scanForCommands()
 
         }, ContextCompat.getMainExecutor(this))

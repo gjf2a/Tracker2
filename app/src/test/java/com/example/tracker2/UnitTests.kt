@@ -102,4 +102,29 @@ class UnitTests {
         assert(manager.deleteProject(projectName))
         assert(!manager.allProjects().contains(projectName))
     }
+
+    @Test
+    fun historyTest() {
+        val file = File("testfile")
+        val history = CommandHistory(file.name)
+        for (i in 1..10) {
+            history.add("two")
+            if (i % 2 == 0) {
+                history.add("three")
+            }
+            if (i % 3 == 0) {
+                history.add("one")
+            }
+        }
+
+        val sorted = history.mostPopular()
+        assert(sorted[0] == "two")
+        assert(sorted[1] == "three")
+        assert(sorted[2] == "one")
+
+        val history2 = CommandHistory(file.name)
+        assert(history == history2)
+
+        file.delete()
+    }
 }
