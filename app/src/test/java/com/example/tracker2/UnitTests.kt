@@ -97,7 +97,6 @@ class UnitTests {
         assert(manager.allLabelsIn(projectName).contains(label2))
         assert(manager.allProjects().contains(projectName))
 
-        // This fails and I have no idea why.
         assert(manager.deleteLabel(projectName, label1))
         assert(!manager.allLabelsIn(projectName).contains(label1))
 

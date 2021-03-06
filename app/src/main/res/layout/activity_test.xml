@@ -6,20 +6,41 @@
     android:layout_height="match_parent"
     tools:context=".TestActivity">
 
+    <Button
+        android:text="Use Old Command"
+        android:id="@+id/use_old"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".2"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
+    <Spinner
+        android:id="@+id/old_commands"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".4"
+        app:layout_constraintHeight_percent=".2"
+        app:layout_constraintLeft_toRightOf="@id/use_old"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
     <TextView
         android:text="Commands:\ncv knn k project width height\ncv knn_brief k project width height numPairs\ncv pause\ncv resume id\n"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         app:layout_constraintLeft_toRightOf="@id/command_tester"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/old_commands"
         />
 
     <EditText
         android:hint="Enter command"
         android:inputType="text"
         android:id="@+id/command_tester"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/use_old"
+        app:layout_constraintLeft_toRightOf="@id/run_test"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintWidth_percent=".4"
@@ -30,7 +51,7 @@
         android:id="@+id/run_test"
         android:text="Test Classifier"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/command_tester"
+        app:layout_constraintTop_toBottomOf="@id/old_commands"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintWidth_percent=".15"

@@ -3,7 +3,9 @@ package com.example.tracker2
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ArrayAdapter
 import kotlinx.android.synthetic.main.activity_test.*
+import java.io.File
 
 class DummyTarget : MessageTarget {
     override fun sendString(msg: String): Boolean {
@@ -12,12 +14,17 @@ class DummyTarget : MessageTarget {
 }
 
 const val COMMAND_FLAG: String = "COMMAND"
+const val HISTORY_FILE: String = "_history"
 
 class TestActivity : FileAccessActivity() {
+
+    private lateinit var history: CommandHistory
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_test)
+
+        history = CommandHistory("${outputDir.toString()}${File.separator}$HISTORY_FILE")
 
         log_test.append("Log\n")
 
@@ -33,9 +40,17 @@ class TestActivity : FileAccessActivity() {
             startActivity(intent)
         }
 
+        use_old.setOnClickListener {
+            command_tester.text.clear()
+            command_tester.text.insert(0, old_commands.selectedItem.toString())
+        }
+
         run_test.setOnClickListener {
             log_test.append("Interpreting...\n")
-            val result = interpret(command_tester.text.toString(), outputDir, DummyTarget())
+            val command = command_tester.text.toString()
+            updateHistory(command)
+
+            val result = interpret(command, outputDir, DummyTarget())
             log_test.append(result.cmdType.toString() + '\n')
             log_test.append(result.msg + '\n')
             if (result.cmdType == CommandType.CREATE_CLASSIFIER) {
@@ -45,5 +60,19 @@ class TestActivity : FileAccessActivity() {
 
             scroller_test.post { scroller_test.fullScroll(View.FOCUS_DOWN) }
         }
+
+        resetHistorySpinner()
+    }
+
+    private fun updateHistory(cmd: String) {
+        history.add(cmd)
+        val items = resetHistorySpinner()
+        old_commands.setSelection(items.indexOf(cmd))
+    }
+
+    private fun resetHistorySpinner(): List<String> {
+        val items = history.mostPopular()
+        old_commands.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, items)
+        return items
     }
 }
