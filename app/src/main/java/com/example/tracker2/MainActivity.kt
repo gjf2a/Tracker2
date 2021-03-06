@@ -53,11 +53,15 @@ interface MessageReceiver {
     fun message(msg: String)
 }
 
-class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
+interface FPSReceiver {
+    fun fps(fps: Double)
+}
+
+class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSReceiver {
     var imageCapture: ImageCapture? = null
     lateinit var cameraExecutor: ExecutorService
     lateinit var view: PreviewView
-    lateinit var analyzer: BitmapAnalyzer1
+    lateinit var analyzer: BitmapAnalyzer
     var talker: MessageTarget = DummyTarget()
     lateinit var reader: TextReader
     var incoming = MessageHolder()
@@ -225,7 +229,8 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
             imageCapture = ImageCapture.Builder()
                 .build()
 
-            analyzer = BitmapAnalyzer1(YuvBitmapConverter(applicationContext), this)
+            analyzer = BitmapAnalyzer(YuvBitmapConverter(applicationContext), this)
+            analyzer.fpsListeners.add(this)
 
             val imageAnalyzer = ImageAnalysis.Builder()
                 .build()
@@ -289,6 +294,10 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver {
     override fun message(msg: String) {
         log.append(msg.trim() + '\n')
     }
+
+    override fun fps(fps: Double) {
+        runOnUiThread { cv_info.text = "FPS: ${"%.2f".format(fps)}" }
+    }
 }
 
 interface BitmapClassifier {
@@ -303,8 +312,9 @@ class DummyClassifier : BitmapClassifier {
     }
 }
 
-class BitmapAnalyzer1(val converter: YuvBitmapConverter, val complaintsTo: MessageReceiver) : ImageAnalysis.Analyzer {
+class BitmapAnalyzer(val converter: YuvBitmapConverter, val complaintsTo: MessageReceiver) : ImageAnalysis.Analyzer {
     var classifiers = ArrayList<BitmapClassifier>()
+    var fpsListeners = ArrayList<FPSReceiver>()
     var currentClassifier = 0
     var frameCount: Long = 0
     var startTime: Long = 0
@@ -333,12 +343,14 @@ class BitmapAnalyzer1(val converter: YuvBitmapConverter, val complaintsTo: Messa
     override fun analyze(image: ImageProxy) {
         try {
             val bitmap = converter.convert(image.image!!)
-            Log.i("BitmapAnalyzer1", "Bitmap: (${bitmap.width}, ${bitmap.height})")
+            Log.i("BitmapAnalyzer", "Bitmap: (${bitmap.width}, ${bitmap.height})")
             classifiers.get(currentClassifier).classify(bitmap)
             frameCount += 1
-            Log.i("BitmapAnalyzer1", "FPS: ${currentFPS()}")
+            for (fps in fpsListeners) {
+                fps.fps(currentFPS())
+            }
         } catch (e: java.lang.Exception) {
-            Log.i("BitmapAnalyzer1", "Exception when classifying: $e")
+            Log.i("BitmapAnalyzer", "Exception when classifying: $e")
             e.printStackTrace()
             complaintsTo.message("Exception when classifying: $e")
         } finally {
