@@ -10,6 +10,12 @@
         android:layout_height="match_parent"
         />
 
+    <com.example.tracker2.Overlay
+        android:id="@+id/rectangle_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
     <Button
         android:id="@+id/left_picture_button"
         android:layout_width="0dp"
@@ -50,7 +56,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintWidth_percent=".2"
-        app:layout_constraintHeight_percent=".2"
+        app:layout_constraintHeight_percent=".1"
         android:text="View Unclassified"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/left_picture_button"
@@ -111,6 +117,17 @@
         app:layout_constraintRight_toRightOf="parent"
         />
 
+    <CheckBox
+        android:id="@+id/floor_sample"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".2"
+        app:layout_constraintHeight_percent=".1"
+        android:text="Floor Sample"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/photo_filename"
+        />
+
     <Button
         android:id="@+id/go_to_image_button"
         android:layout_width="0dp"
@@ -143,7 +160,7 @@
         app:layout_constraintHeight_percent=".2"
         android:text="Delete Picture"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/photo_filename"
+        app:layout_constraintTop_toBottomOf="@id/floor_sample"
         app:layout_constraintBottom_toTopOf="@id/go_to_project_label"
         android:elevation="2dp"
         />

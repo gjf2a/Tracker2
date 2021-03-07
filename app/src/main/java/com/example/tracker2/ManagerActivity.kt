@@ -2,6 +2,7 @@ package com.example.tracker2
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -62,6 +63,8 @@ class ManagerActivity : FileAccessActivity() {
             }
         }
 
+        floor_sample.setOnCheckedChangeListener { _, b -> showCurrentFile() }
+
         delete_picture_button.setOnClickListener { files.currentFile()?.delete(); showCurrentFile() }
     }
 
@@ -95,16 +98,24 @@ class ManagerActivity : FileAccessActivity() {
     }
 
     private fun showCurrentFile() {
+        Log.i("ManagerActivity", "showCurrentFile()")
         photo_directory.text = "${viewingDir(view_unclassified.isChecked).toString()}${File.separatorChar}${files.currentName()}"
-        photo_filename.text = if (files.size() > 0) {
-            "${projectName()}:${labelName()} (${files.i + 1}/${files.size()})"
-        } else {
-            "None"
-        }
         if (files.currentImage() == null) {
             current_image.setImageResource(android.R.color.darker_gray)
+            photo_filename.text = "None"
         } else {
+            val width = files.currentImage()!!.width
+            val height = files.currentImage()!!.height
+            photo_filename.text = "${projectName()}:${labelName()} (${files.i + 1}/${files.size()}) ${width}x${height}"
             current_image.setImageBitmap(files.currentImage())
+            if (floor_sample.isChecked) {
+                rectangle_overlay.addOverlayer(RectangleOverlayer(width, height, width/4, height/3))
+                Log.i("ManagerActivity", "Adding rectangle overlay")
+            } else {
+                rectangle_overlay.clearOverlayers()
+                Log.i("ManagerActivity", "Removing rectangle overlay")
+            }
+            runOnUiThread { rectangle_overlay.invalidate() }
         }
     }
 }
