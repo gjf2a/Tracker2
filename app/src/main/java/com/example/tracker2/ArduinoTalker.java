@@ -15,7 +15,7 @@ import java.util.Map;
  * Created by gabriel on 5/25/18.
  */
 
-public class ArduinoTalker implements MessageTarget {
+public class ArduinoTalker implements ClassifierListener {
     private boolean deviceOk = false;
     private UsbManager usbManager;
     private UsbDevice device;
@@ -195,11 +195,12 @@ public class ArduinoTalker implements MessageTarget {
         return send(bytes) == 1;
     }
 
-    public boolean sendString(String s) {
+    public void receiveClassification(String s) {
         if (!s.endsWith("\n")) {
             s += "\n";
         }
         Log.i(TAG, "Sending: '" + s + "'");
-        return send(s.getBytes()) == s.length();
+        int sent = send(s.getBytes());
+        Log.i(TAG, "Message is " + s.getBytes().length + " bytes; " + sent + " bytes sent");
     }
 }

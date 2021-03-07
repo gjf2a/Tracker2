@@ -12,8 +12,8 @@ fun suffixStartingWith(suffixStart: String, msg: String): String {
     return msg
 }
 
-interface MessageTarget {
-    fun sendString(msg: String): Boolean
+interface ClassifierListener {
+    fun receiveClassification(msg: String)
 }
 
 enum class CommandType {
@@ -22,7 +22,7 @@ enum class CommandType {
 
 data class InterpreterResult(val cmdType: CommandType, val classifier: BitmapClassifier, val index: Int, val msg: String)
 
-fun interpret(msg: String, outputDir: File, talker: MessageTarget): InterpreterResult {
+fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>): InterpreterResult {
     val manager = FileManager(outputDir)
     val command = suffixStartingWith("cv ", msg.trim()).split(" ")
     if (command.isNotEmpty() && command[0] == "cv") {
@@ -32,7 +32,8 @@ fun interpret(msg: String, outputDir: File, talker: MessageTarget): InterpreterR
             if (manager.projectExists(project)) {
                 val width = Integer.parseInt(command[4])
                 val height = Integer.parseInt(command[5])
-                val knn = KnnClassifier(talker, k, project, manager, width, height)
+                val knn = KnnClassifier(k, project, manager, width, height)
+                knn.addListeners(listeners)
                 return InterpreterResult(CommandType.CREATE_CLASSIFIER, knn, 0, "Activating kNN classifer; k=$k; project=$project\n")
             } else {
                 return InterpreterResult(CommandType.ERROR, DummyClassifier(), 0, "Project $project does not exist")
@@ -44,13 +45,13 @@ fun interpret(msg: String, outputDir: File, talker: MessageTarget): InterpreterR
                 val width = Integer.parseInt(command[4])
                 val height = Integer.parseInt(command[5])
                 val numPairs = Integer.parseInt(command[6])
-                val knn = KnnBriefClassifier(talker, k, project, manager, width, height, numPairs)
+                val knn = KnnBriefClassifier(k, project, manager, width, height, numPairs)
+                knn.addListeners(listeners)
                 return InterpreterResult(CommandType.CREATE_CLASSIFIER, knn, 0, "Activating BRIEF kNN classifier; k=$k; project = $project; numPairs = $numPairs\n")
             } else {
                 return InterpreterResult(CommandType.ERROR, DummyClassifier(), 0, "Project $project does not exist")
             }
         } else if (command.size == 2 && command[1] == "pause") {
-            talker.sendString("0")
             return InterpreterResult(CommandType.PAUSE_CLASSIFIER, DummyClassifier(), 0, "Classifier paused")
         } else if (command.size == 3 && command[1] == "resume") {
             val id = Integer.parseInt(command[2])

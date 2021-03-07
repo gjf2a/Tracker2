@@ -7,10 +7,8 @@ import android.widget.ArrayAdapter
 import kotlinx.android.synthetic.main.activity_test.*
 import java.io.File
 
-class DummyTarget : MessageTarget {
-    override fun sendString(msg: String): Boolean {
-        return true
-    }
+class DummyTarget : ClassifierListener {
+    override fun receiveClassification(msg: String) {}
 }
 
 const val COMMAND_FLAG: String = "COMMAND"
@@ -50,7 +48,7 @@ class TestActivity : FileAccessActivity() {
             val command = command_tester.text.toString()
             updateHistory(command)
 
-            val result = interpret(command, outputDir, DummyTarget())
+            val result = interpret(command, outputDir, arrayListOf(DummyTarget()))
             log_test.append(result.cmdType.toString() + '\n')
             log_test.append(result.msg + '\n')
             if (result.cmdType == CommandType.CREATE_CLASSIFIER) {

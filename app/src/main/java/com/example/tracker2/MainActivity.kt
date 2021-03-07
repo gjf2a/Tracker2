@@ -57,12 +57,12 @@ interface FPSReceiver {
     fun fps(fps: Double)
 }
 
-class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSReceiver {
+class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSReceiver, ClassifierListener {
     var imageCapture: ImageCapture? = null
     lateinit var cameraExecutor: ExecutorService
     lateinit var view: PreviewView
     lateinit var analyzer: BitmapAnalyzer
-    var talker: MessageTarget = DummyTarget()
+    var talker: ClassifierListener = DummyTarget()
     lateinit var reader: TextReader
     var incoming = MessageHolder()
 
@@ -112,9 +112,8 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
 
     private fun safeSend(msg: String) {
         try {
-            if (talker.sendString(msg)) {
-                log.append(">$msg\n")
-            }
+            talker.receiveClassification(msg)
+            log.append(">$msg\n")
         } catch (e: Exception) {
             Log.i("MainActivity", "Exception when sending '$msg': $e")
             log.append("Exception when sending '$msg': $e\n")
@@ -134,14 +133,14 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
         val id = analyzer.addClassifier(classifier)
         analyzer.resetFPSCalculation()
         log.append(classifier.assess())
-        talker.sendString("$id")
+        talker.receiveClassification("$id")
     }
 
     private fun scanForCommands() {
         try {
             for (message in incoming) {
                 Log.i("MainActivity", "Processing '$message'")
-                val interpreted = interpret(message, outputDir, talker)
+                val interpreted = interpret(message, outputDir, arrayListOf(this, talker))
                 if (interpreted.cmdType == CommandType.CREATE_CLASSIFIER) {
                     addClassifier(interpreted.classifier)
                 } else if (interpreted.cmdType == CommandType.PAUSE_CLASSIFIER) {
@@ -254,6 +253,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
             }
 
             // TODO: I am sure this was a bad idea. Find a better place to do this.
+            // (Maybe this works after all?)
             scanForCommands()
 
         }, ContextCompat.getMainExecutor(this))
@@ -296,16 +296,38 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     }
 
     override fun fps(fps: Double) {
-        runOnUiThread { cv_info.text = "FPS: ${"%.2f".format(fps)}" }
+        runOnUiThread { fps_info.text = "FPS: ${"%.2f".format(fps)}" }
+    }
+
+    override fun receiveClassification(msg: String) {
+        runOnUiThread { cv_info.text = msg }
     }
 }
 
-interface BitmapClassifier {
-    fun classify(image: Bitmap)
-    fun assess(): String
+abstract class BitmapClassifier {
+    private val listeners = ArrayList<ClassifierListener>()
+
+    fun addListener(listener: ClassifierListener) {
+        listeners.add(listener)
+    }
+
+    fun addListeners(listeners: Iterable<ClassifierListener>) {
+        for (listener in listeners) {
+            addListener(listener)
+        }
+    }
+
+    fun notifyListeners(msg: String) {
+        for (listener in listeners) {
+            listener.receiveClassification(msg)
+        }
+    }
+
+    abstract fun classify(image: Bitmap)
+    abstract fun assess(): String
 }
 
-class DummyClassifier : BitmapClassifier {
+class DummyClassifier : BitmapClassifier() {
     override fun classify(image: Bitmap) {}
     override fun assess(): String {
         return "No assessment\n"

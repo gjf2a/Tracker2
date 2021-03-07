@@ -56,13 +56,26 @@
         app:layout_constraintBottom_toBottomOf="parent"/>
 
     <TextView
+        android:text="FPS"
+        android:id="@+id/fps_info"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:textColor="@color/colorPrimary"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/cv_info"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintWidth_percent=".2"
+        />
+
+    <TextView
         android:text="CV Info"
         android:id="@+id/cv_info"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:textColor="@color/colorPrimary"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fps_info"
         app:layout_constraintBottom_toTopOf="@id/scroller"
         app:layout_constraintHeight_percent=".1"
         app:layout_constraintWidth_percent=".2"
@@ -74,7 +87,7 @@
         android:layout_height="0dp"
         app:layout_constraintWidth_default="percent"
         app:layout_constraintWidth_percent=".2"
-        app:layout_constraintHeight_percent=".9"
+        app:layout_constraintHeight_percent=".8"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent">
         <TextView
