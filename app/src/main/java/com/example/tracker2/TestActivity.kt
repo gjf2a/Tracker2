@@ -33,7 +33,9 @@ class TestActivity : FileAccessActivity() {
         test_to_robot.setOnClickListener {
             val intent = Intent(this@TestActivity, MainActivity::class.java)
             if (command_tester.text.isNotEmpty()) {
-                intent.putExtra(COMMAND_FLAG, command_tester.text.toString())
+                val command = command_tester.text.toString()
+                updateHistory(command)
+                intent.putExtra(COMMAND_FLAG, command)
             }
             startActivity(intent)
         }
@@ -46,12 +48,12 @@ class TestActivity : FileAccessActivity() {
         run_test.setOnClickListener {
             log_test.append("Interpreting...\n")
             val command = command_tester.text.toString()
-            updateHistory(command)
 
             val result = interpret(command, outputDir, arrayListOf(DummyTarget()))
             log_test.append(result.cmdType.toString() + '\n')
             log_test.append(result.msg + '\n')
             if (result.cmdType == CommandType.CREATE_CLASSIFIER) {
+                updateHistory(command)
                 val assessment = result.classifier.assess()
                 log_test.append(assessment.trim() + '\n')
             }
