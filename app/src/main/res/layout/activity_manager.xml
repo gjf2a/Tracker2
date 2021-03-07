@@ -19,13 +19,13 @@
         android:layout_marginBottom="50dp"
         android:text="Back"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/filename_text"
+        app:layout_constraintRight_toLeftOf="@id/photo_directory"
         app:layout_constraintTop_toTopOf="parent"
         />
 
     <TextView
         android:text="Test"
-        android:id="@+id/filename_text"
+        android:id="@+id/photo_directory"
         android:layout_width="200dp"
         app:layout_constraintLeft_toRightOf="@id/left_picture_button"
         app:layout_constraintRight_toLeftOf="@id/right_picture_button"
@@ -40,7 +40,7 @@
         app:layout_constraintWidth_percent=".15"
         app:layout_constraintHeight_percent=".2"
         android:text="Forward"
-        app:layout_constraintLeft_toRightOf="@id/filename_text"
+        app:layout_constraintLeft_toRightOf="@id/photo_directory"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         />
@@ -100,6 +100,17 @@
         android:elevation="2dp"
         />
 
+    <TextView
+        android:text="Test"
+        android:id="@+id/photo_filename"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/move_picture_button"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
     <Button
         android:id="@+id/go_to_image_button"
         android:layout_width="0dp"
@@ -132,7 +143,7 @@
         app:layout_constraintHeight_percent=".2"
         android:text="Delete Picture"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/move_picture_button"
+        app:layout_constraintTop_toBottomOf="@id/photo_filename"
         app:layout_constraintBottom_toTopOf="@id/go_to_project_label"
         android:elevation="2dp"
         />

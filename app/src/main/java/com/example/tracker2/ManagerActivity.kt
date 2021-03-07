@@ -95,7 +95,12 @@ class ManagerActivity : FileAccessActivity() {
     }
 
     private fun showCurrentFile() {
-        filename_text.text = "${viewingDir(view_unclassified.isChecked).toString()}; ${files.currentName()}"
+        photo_directory.text = "${viewingDir(view_unclassified.isChecked).toString()}${File.separatorChar}${files.currentName()}"
+        photo_filename.text = if (files.size() > 0) {
+            "${projectName()}:${labelName()} (${files.i + 1}/${files.size()})"
+        } else {
+            "None"
+        }
         if (files.currentImage() == null) {
             current_image.setImageResource(android.R.color.darker_gray)
         } else {

@@ -5,7 +5,7 @@ import android.graphics.BitmapFactory
 import java.io.File
 
 class FileLoop {
-    internal var files: ArrayList<File> = ArrayList()
+    private var files: ArrayList<File> = ArrayList()
     var i: Int = 0
 
     fun refresh(dir: File) {
@@ -21,6 +21,8 @@ class FileLoop {
             i %= files.size
         }
     }
+
+    fun size(): Int {return files.size}
 
     fun empty(): Boolean {
         return files.size == 0

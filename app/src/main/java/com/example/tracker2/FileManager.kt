@@ -1,6 +1,5 @@
 package com.example.tracker2
 
-import android.util.Log
 import java.io.File
 
 const val PROJECT_PREFIX = "project"
