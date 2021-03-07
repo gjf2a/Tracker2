@@ -108,7 +108,9 @@ class UnitTests {
     fun historyTest() {
         val file = File("testfile")
         val history = CommandHistory(file.name)
+        history.add(" ")
         for (i in 1..10) {
+            history.add(" ")
             history.add("two")
             if (i % 2 == 0) {
                 history.add("three")
@@ -119,6 +121,7 @@ class UnitTests {
         }
 
         val sorted = history.mostPopular()
+        assert(sorted.size == 3)
         assert(sorted[0] == "two")
         assert(sorted[1] == "three")
         assert(sorted[2] == "one")
