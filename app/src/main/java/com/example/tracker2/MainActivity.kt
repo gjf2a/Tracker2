@@ -143,16 +143,18 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
                 val interpreted = interpret(message, outputDir, arrayListOf(this, talker))
                 if (interpreted.cmdType == CommandType.CREATE_CLASSIFIER) {
                     addClassifier(interpreted.classifier)
+                    classifier_overlay.replaceOverlayers(interpreted.classifier.overlayers())
                 } else if (interpreted.cmdType == CommandType.PAUSE_CLASSIFIER) {
-                    analyzer.currentClassifier = 0
                     log.append("FPS ${analyzer.currentFPS()}")
+                    analyzer.pauseClassifier()
+                    classifier_overlay.clearOverlayers()
                 } else if (interpreted.cmdType == CommandType.RESUME_CLASSIFIER) {
                     val id = interpreted.index
-                    if (id >= analyzer.classifiers.size || id < 0) {
+                    if (id >= analyzer.numClassifiers() || id < 0) {
                         log.append("Id $id not valid")
                     } else {
-                        analyzer.currentClassifier = id
-                        analyzer.resetFPSCalculation()
+                        analyzer.resumeClassifier(id)
+                        classifier_overlay.replaceOverlayers(analyzer.getCurrentClassifier().overlayers())
                     }
                 }
 
@@ -252,8 +254,6 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
                 Log.e(TAG, "Use case binding failed", exc)
             }
 
-            // TODO: I am sure this was a bad idea. Find a better place to do this.
-            // (Maybe this works after all?)
             scanForCommands()
 
         }, ContextCompat.getMainExecutor(this))
@@ -300,7 +300,10 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     }
 
     override fun receiveClassification(msg: String) {
-        runOnUiThread { cv_info.text = msg }
+        runOnUiThread {
+            cv_info.text = msg
+            classifier_overlay.invalidate()
+        }
     }
 }
 
@@ -325,19 +328,21 @@ abstract class BitmapClassifier {
 
     abstract fun classify(image: Bitmap)
     abstract fun assess(): String
+    open fun overlayers(): ArrayList<Overlayer> {return ArrayList()}
 }
 
 class DummyClassifier : BitmapClassifier() {
     override fun classify(image: Bitmap) {}
+
     override fun assess(): String {
         return "No assessment\n"
     }
 }
 
 class BitmapAnalyzer(val converter: YuvBitmapConverter, val complaintsTo: MessageReceiver) : ImageAnalysis.Analyzer {
-    var classifiers = ArrayList<BitmapClassifier>()
+    private var classifiers = ArrayList<BitmapClassifier>()
     var fpsListeners = ArrayList<FPSReceiver>()
-    var currentClassifier = 0
+    private var currentClassifier = 0
     var frameCount: Long = 0
     var startTime: Long = 0
 
@@ -346,10 +351,28 @@ class BitmapAnalyzer(val converter: YuvBitmapConverter, val complaintsTo: Messag
         resetFPSCalculation()
     }
 
+    fun numClassifiers(): Int {
+        return classifiers.size
+    }
+
     fun addClassifier(b: BitmapClassifier): Int {
         classifiers.add(b)
         currentClassifier = classifiers.size - 1
         return currentClassifier
+    }
+
+    fun getCurrentClassifier(): BitmapClassifier {
+        return classifiers[currentClassifier]
+    }
+
+    fun pauseClassifier() {
+        currentClassifier = 0
+        resetFPSCalculation()
+    }
+
+    fun resumeClassifier(index: Int) {
+        currentClassifier = index
+        resetFPSCalculation()
     }
 
     fun resetFPSCalculation() {
@@ -365,7 +388,7 @@ class BitmapAnalyzer(val converter: YuvBitmapConverter, val complaintsTo: Messag
     override fun analyze(image: ImageProxy) {
         try {
             val bitmap = converter.convert(image.image!!)
-            Log.i("BitmapAnalyzer", "Bitmap: (${bitmap.width}, ${bitmap.height})")
+            //Log.i("BitmapAnalyzer", "Bitmap: (${bitmap.width}, ${bitmap.height})")
             classifiers.get(currentClassifier).classify(bitmap)
             frameCount += 1
             for (fps in fpsListeners) {

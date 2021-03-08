@@ -14,23 +14,6 @@ fun bitmapSSD(img1: Bitmap, img2: Bitmap): Long {
     return sum
 }
 
-fun get8bits(color: Int, rightShift: Int): Int {
-    return (color shr rightShift) and 0xff
-}
-
-fun squaredDiffInt(c1: Int, c2: Int): Long {
-    val diff = (c1 - c2).toLong();
-    return diff * diff
-}
-
-fun singlePixelSSD(color1: Int, color2: Int): Long {
-    var sum: Long = 0
-    for (rightShift in 0..24 step 8) {
-        sum += squaredDiffInt(get8bits(color1, rightShift), get8bits(color2, rightShift))
-    }
-    return sum
-}
-
 class KnnClassifier(k: Int, projectName: String, files: FileManager, val scaleWidth: Int, val scaleHeight: Int) : BitmapClassifier() {
     var knn: KNN<Bitmap,String,Long> = KNN(::bitmapSSD, k)
 

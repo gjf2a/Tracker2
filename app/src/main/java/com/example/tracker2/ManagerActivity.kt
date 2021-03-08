@@ -106,10 +106,12 @@ class ManagerActivity : FileAccessActivity() {
         } else {
             val width = files.currentImage()!!.width
             val height = files.currentImage()!!.height
-            photo_filename.text = "${projectName()}:${labelName()} (${files.i + 1}/${files.size()}) ${width}x${height}"
+            val index = if (files.i == 0) {files.size()} else {files.i}
+            val category = if (view_unclassified.isChecked) {"Unclassified"} else {"${projectName()}:${labelName()}"}
+            photo_filename.text = "$category ($index/${files.size()}) ${width}x${height}"
             current_image.setImageBitmap(files.currentImage())
             if (floor_sample.isChecked) {
-                rectangle_overlay.addOverlayer(RectangleOverlayer(width, height, width/4, height/3))
+                rectangle_overlay.addOverlayer(RectangleOverlayer(arrayListOf(::get_floor_rect, ::get_upper_left_rect, ::get_upper_right_rect)))
                 Log.i("ManagerActivity", "Adding rectangle overlay")
             } else {
                 rectangle_overlay.clearOverlayers()

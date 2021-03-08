@@ -4,16 +4,16 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import com.example.tracker2.MainActivity.Companion.TAG
 
 interface Overlayer {
     fun draw(canvas: Canvas)
 }
 
-class RectangleOverlayer(val imageWidth: Int, val imageHeight: Int, val rectWidth: Int, val rectHeight: Int) : Overlayer {
+class RectangleOverlayer(val rectFuncs: ArrayList<(Int,Int) -> Rect>) : Overlayer {
     private val rectPaint =
         Paint().apply {
             isAntiAlias = true
@@ -22,13 +22,9 @@ class RectangleOverlayer(val imageWidth: Int, val imageHeight: Int, val rectWidt
         }
 
     override fun draw(canvas: Canvas) {
-        val xScale = canvas.width.toFloat() / imageWidth.toFloat()
-        val yScale = canvas.height.toFloat() / imageHeight.toFloat()
-        val left = ((imageWidth - rectWidth) / 2).toFloat() * xScale
-        val right = left + rectWidth.toFloat() * xScale
-        val top = (imageHeight - rectHeight).toFloat() * yScale
-        val bottom = imageHeight.toFloat() * yScale
-        canvas.drawRect(left, top, right, bottom, rectPaint)
+        for (rectFunc in rectFuncs) {
+            canvas.drawRect(rectFunc(canvas.width, canvas.height), rectPaint)
+        }
     }
 }
 
@@ -45,6 +41,11 @@ class Overlay constructor(context: Context?, attributeSet: AttributeSet?) : View
 
     fun addOverlayer(overlayer: Overlayer) {
         overlayers.add(overlayer)
+    }
+
+    fun replaceOverlayers(overlayers: ArrayList<Overlayer>) {
+        clearOverlayers()
+        this.overlayers.addAll(overlayers)
     }
 
     fun clearOverlayers() {

@@ -103,5 +103,13 @@
         app:layout_constraintRight_toLeftOf="@id/scroller"
         android:layout_height="match_parent" />
 
+    <com.example.tracker2.Overlay
+        android:id="@+id/classifier_overlay"
+        android:layout_width="0dp"
+        app:layout_constraintWidth_percent=".8"
+        app:layout_constraintRight_toLeftOf="@id/scroller"
+        android:layout_height="match_parent"
+        />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,5 +1,7 @@
 package com.example.tracker2
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import java.io.File
 
 const val PROJECT_PREFIX = "project"
@@ -63,6 +65,24 @@ class FileManager(var baseDir: File) {
             val newLabel = File(projectDir(projectName), label)
             newLabel.mkdir()
         }
+    }
+
+    fun imageFilesFor(projectName: String, label: String): ArrayList<File> {
+        val result = ArrayList<File>()
+        for (file in labelDir(projectName, label).listFiles()!!.filter { it.extension == "jpg" }) {
+            result.add(file)
+        }
+        return result
+    }
+
+    fun numImagesFor(projectName: String, label: String): Int {
+        return imageFilesFor(projectName, label).size
+    }
+
+    fun loadImage(projectName: String, label: String, index: Int, scaledWidth: Int, scaledHeight: Int): Bitmap {
+        val i = index % numImagesFor(projectName, label)
+        val imageFile = imageFilesFor(projectName, label)[i]
+        return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(imageFile.path), scaledWidth, scaledHeight, false)
     }
 
     fun moveFileTo(file: File, projectName: String, label: String) {
