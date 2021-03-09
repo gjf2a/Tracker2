@@ -36,22 +36,41 @@ fun <T, N> classify(objs: ArrayList<T>, t: T, distance: (T,T)->N): Int
 fun <T, N> plus_plus_randomized(k: Int, data: ArrayList<T>, distance: (T, T) -> N): ArrayList<T>
         where N: Number, N: Comparable<N> {
     val result = ArrayList<T>()
-    result.add(data[ThreadLocalRandom.current().nextInt(k)])
+    val candidates = ArrayList<T>(data)
+    val first = ThreadLocalRandom.current().nextInt(data.size)
+    result.add(swapRemove(first, candidates))
+
     for (i in 0 until k-1) {
-        val distro = Distribution<T>()
-        for (d in data) {
-            distro.add(d, 1 + distance(result.last(), d).toDouble().pow(2))
+        val distro = Distribution<Int>()
+        for (j in 0 until candidates.size) {
+            distro.add(j, 1 + closestDistanceTo(result, candidates[j], distance).toDouble().pow(2))
         }
-        result.add(distro.random_pick())
+        val pick = distro.random_pick()
+        result.add(swapRemove(pick, candidates))
     }
     return result
 }
 
-fun <T, N> non_randomized_init(k: Int, data: ArrayList<T>, distance: (T, T) -> N): ArrayList<T>
-        where N: Number, N: Comparable<N> {
-    val result = ArrayList<T>()
-    // TODO: Actually implement this.
-    return result
+fun <T> swapRemove(target: Int, list: ArrayList<T>): T {
+    return if (target < list.size - 1) {
+        val result = list[target]
+        list[target] = list.removeAt(list.size - 1)
+        result
+    } else {
+        list.removeAt(list.size - 1)
+    }
+}
+
+fun <T, N> closestDistanceTo(selected: ArrayList<T>, candidate: T, distance: (T, T) -> N): N
+    where N: Number, N: Comparable<N> {
+    var min = distance(candidate, selected[0])
+    for (i in 1 until selected.size) {
+        val d = distance(candidate, selected[i])
+        if (d < min) {
+            min = d
+        }
+    }
+    return min
 }
 
 fun <T, N> iterate(k: Int, data: ArrayList<T>, distance: (T, T) -> N, mean: (ArrayList<T>) -> T): ArrayList<T>

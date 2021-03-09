@@ -19,4 +19,8 @@ class Distribution<T> {
         val num = ThreadLocalRandom.current().nextDouble(totalWeight)
         return distro.floorEntry(num)!!.value
     }
+
+    override fun toString(): String {
+        return distro.toString()
+    }
 }

@@ -48,10 +48,22 @@ class UnitTests {
     fun kmeansTest() {
         val values = arrayListOf(1, 2, 3, 1001, 1002, 1003, 2001, 2002, 2003, 3001, 3002, 3003)
         val means = KMeans(4, {x, y -> (x - y).toDouble().pow(2)}, values, {nums -> nums.sum() / nums.size})
-        for (mean in means) {
-            print("$mean; ")
+        for (target in arrayOf(2, 1002, 2002, 3002)) {
+            assert(means.contains(target))
         }
-        println()
+    }
+
+    @Test
+    fun swapRemoveTest() {
+        val nums = arrayListOf(0, 1, 2, 3)
+        assert(swapRemove(1, nums) == 1)
+        assert(nums.size == 3)
+        assert(swapRemove(2, nums) == 2)
+        assert(nums.size == 2)
+        assert(swapRemove(1, nums) == 3)
+        assert(nums.size == 1)
+        assert(swapRemove(0, nums) == 0)
+        assert(nums.size == 0)
     }
 
     @Test
