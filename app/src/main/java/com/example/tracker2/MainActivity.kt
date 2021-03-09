@@ -141,7 +141,9 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
             for (message in incoming) {
                 Log.i("MainActivity", "Processing '$message'")
                 val interpreted = interpret(message, outputDir, arrayListOf(this, talker))
-                if (interpreted.cmdType == CommandType.CREATE_CLASSIFIER) {
+                if (interpreted.cmdType == CommandType.COMMENT) {
+                    log.append(interpreted.msg)
+                } else if (interpreted.cmdType == CommandType.CREATE_CLASSIFIER) {
                     addClassifier(interpreted.classifier)
                     classifier_overlay.replaceOverlayers(interpreted.classifier.overlayers())
                 } else if (interpreted.cmdType == CommandType.PAUSE_CLASSIFIER) {
