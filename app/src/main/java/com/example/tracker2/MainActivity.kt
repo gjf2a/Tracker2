@@ -151,7 +151,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
                     analyzer.pauseClassifier()
                     classifier_overlay.clearOverlayers()
                 } else if (interpreted.cmdType == CommandType.RESUME_CLASSIFIER) {
-                    val id = interpreted.index
+                    val id = interpreted.resumeIndex
                     if (id >= analyzer.numClassifiers() || id < 0) {
                         log.append("Id $id not valid")
                     } else {
