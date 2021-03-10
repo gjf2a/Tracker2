@@ -14,7 +14,8 @@ fun bitmapSSD(img1: Bitmap, img2: Bitmap): Long {
     return sum
 }
 
-class KnnClassifier(k: Int, projectName: String, files: FileManager, val scaleWidth: Int, val scaleHeight: Int) : BitmapClassifier() {
+class KnnClassifier(k: Int, projectName: String, files: FileManager, val scaleWidth: Int,
+                    val scaleHeight: Int) : BitmapClassifier() {
     var knn: KNN<Bitmap,String,Long> = KNN(::bitmapSSD, k)
 
     init {

@@ -99,7 +99,7 @@ fun <T, N> iterate(k: Int, data: ArrayList<T>, distance: (T, T) -> N, mean: (Arr
 }
 
 class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, data: ArrayList<T>,
-                             dataLabels: ArrayList<L>, mean: (ArrayList<T>) -> T) : Iterable<T>
+                             dataLabels: ArrayList<L>, mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
         where N: Number, N: Comparable<N> {
     val means = ArrayList<T>()
     val labels = ArrayList<L>()
@@ -130,7 +130,7 @@ class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, data: ArrayLis
         return means.iterator()
     }
 
-    fun labelFor(example: T): L {
+    override fun labelFor(example: T): L {
         val mean = classify(means, example, distance)
         return labels[mean]
     }

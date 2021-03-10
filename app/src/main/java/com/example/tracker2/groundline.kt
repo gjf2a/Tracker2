@@ -3,7 +3,7 @@ package com.example.tracker2
 import android.graphics.*
 import android.util.Log
 
-fun get_floor_rect(width: Int, height: Int): Rect {
+fun getFloorRect(width: Int, height: Int): Rect {
     val rectWidth = width / 4
     val rectHeight = height / 3
     val left = (width - rectWidth) / 2
@@ -13,40 +13,42 @@ fun get_floor_rect(width: Int, height: Int): Rect {
     return Rect(left, top, right, bottom)
 }
 
-fun get_upper_left_rect(width: Int, height: Int): Rect {
+fun getUpperLeftRect(width: Int, height: Int): Rect {
     val rectWidth = width / 4
     val rectHeight = height / 4
     return Rect(0, 0, rectWidth, rectHeight)
 }
 
-fun get_upper_right_rect(width: Int, height: Int): Rect {
+fun getUpperRightRect(width: Int, height: Int): Rect {
     val rectWidth = width / 4
     val rectHeight = height / 4
     return Rect(width - rectWidth, 0, width, rectHeight)
 }
 
-class Groundline(images: ArrayList<Bitmap>, k: Int) : BitmapClassifier() {
-    val isFloor = KNN<ColorTriple, Boolean, Long>(::colorSSD, k)
+fun makeLabeledColorsFrom(images: ArrayList<Bitmap>): ArrayList<Pair<ColorTriple, Boolean>> {
+    val labeledData = ArrayList<Pair<ColorTriple, Boolean>>()
+    for (image in images) {
+        for (rectFunc in arrayListOf(::getUpperLeftRect, ::getUpperRightRect)) {
+            addColorsFrom(image, rectFunc(image.width, image.height), labeledData,false)
+        }
+        addColorsFrom(image, getFloorRect(image.width, image.height), labeledData,true)
+    }
+    return labeledData
+}
+
+fun addColorsFrom(image: Bitmap, rect: Rect, labeledData: ArrayList<Pair<ColorTriple, Boolean>>, label: Boolean) {
+    for (x in rect.left until rect.right) {
+        for (y in rect.top until rect.bottom) {
+            labeledData.add(Pair(tripleFrom(x, y, image), label))
+        }
+    }
+}
+
+open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>(images: ArrayList<Bitmap>, makeClassifier: (ArrayList<Pair<ColorTriple,Boolean>>)->C) : BitmapClassifier() {
+    val isFloor = makeClassifier(makeLabeledColorsFrom(images))
     val overlayer = GroundlineOverlayer()
     val width = images[0].width
     val height = images[0].height
-
-    init {
-        for (image in images) {
-            for (rectFunc in arrayListOf(::get_upper_left_rect, ::get_upper_right_rect)) {
-                addColorsFrom(image, rectFunc(image.width, image.height), false)
-            }
-            addColorsFrom(image, get_floor_rect(image.width, image.height), true)
-        }
-    }
-
-    private fun addColorsFrom(image: Bitmap, rect: Rect, label: Boolean) {
-        for (x in rect.left until rect.right) {
-            for (y in rect.top until rect.bottom) {
-                isFloor.addExample(tripleFrom(x, y, image), label)
-            }
-        }
-    }
 
     override fun classify(image: Bitmap) {
         val x2y = ArrayList<Int>()
@@ -82,11 +84,26 @@ class Groundline(images: ArrayList<Bitmap>, k: Int) : BitmapClassifier() {
     }
 
     override fun assess(): String {
-        return "Total knn examples: ${isFloor.numExamples()}\n"
+        return "Groundline ready\n"
     }
 
     override fun overlayers(): ArrayList<Overlayer> {
         return arrayListOf(overlayer)
+    }
+}
+
+fun knnTrainer(labeled: ArrayList<Pair<ColorTriple, Boolean>>, k: Int): KNN<ColorTriple, Boolean, Long> {
+    val result = KNN<ColorTriple, Boolean, Long>(::colorSSD, k)
+    for (p in labeled) {
+        result.addExample(p.first, p.second)
+    }
+    return result
+}
+
+class GroundlineKnn(images: ArrayList<Bitmap>, k: Int) :
+    Groundline<KNN<ColorTriple, Boolean, Long>>(images, { knnTrainer(it, k)}) {
+    override fun assess(): String {
+        return "Total knn examples: ${isFloor.numExamples()}\n"
     }
 }
 

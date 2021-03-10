@@ -111,7 +111,7 @@ class ManagerActivity : FileAccessActivity() {
             photo_filename.text = "$category ($index/${files.size()}) ${width}x${height}"
             current_image.setImageBitmap(files.currentImage())
             if (floor_sample.isChecked) {
-                rectangle_overlay.addOverlayer(RectangleOverlayer(arrayListOf(::get_floor_rect, ::get_upper_left_rect, ::get_upper_right_rect)))
+                rectangle_overlay.addOverlayer(RectangleOverlayer(arrayListOf(::getFloorRect, ::getUpperLeftRect, ::getUpperRightRect)))
                 Log.i("ManagerActivity", "Adding rectangle overlay")
             } else {
                 rectangle_overlay.clearOverlayers()

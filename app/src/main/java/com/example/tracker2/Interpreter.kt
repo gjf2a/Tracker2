@@ -92,7 +92,7 @@ fun interpretGroundline(command: List<String>, manager: FileManager, listeners: 
                     )
                 )
             }
-            val groundline = Groundline(choices, k)
+            val groundline = GroundlineKnn(choices, k)
             groundline.addListeners(listeners)
             return createClassifier(groundline,
                 "Activating Groundline: $k $project $label (${width}x${height} $choices")

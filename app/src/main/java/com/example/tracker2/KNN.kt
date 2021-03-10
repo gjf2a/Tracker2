@@ -4,14 +4,18 @@ import java.lang.StringBuilder
 import java.util.*
 import kotlin.collections.ArrayList
 
-class KNN<T,L,D: Comparable<D>>(val distance: (T,T) -> D, val k: Int) {
+interface SimpleClassifier<T, L> {
+    fun labelFor(example: T): L
+}
+
+class KNN<T,L,D: Comparable<D>>(val distance: (T,T) -> D, val k: Int) : SimpleClassifier<T, L> {
     private val examples = ArrayList<Pair<T,L>>()
 
     fun addExample(example: T, label: L) {
         examples.add(Pair(example,label))
     }
 
-    fun labelFor(example: T): L {
+    override fun labelFor(example: T): L {
         val distances = examples.map { Pair(distance(it.first, example), it.second) }.sortedBy { it.first}
         val votes = Histogram<L>()
         for (i in 0 until numToCheck()) {
@@ -56,7 +60,7 @@ class ConfusionMatrix<L> {
     }
 
     fun summary(): String {
-        var result = StringBuilder()
+        val result = StringBuilder()
         for (label in labels) {
             result.append("${label.toString()}: ${Ratio(numCorrectFor.get(label), numCorrectFor.get(label) + numIncorrectFor.get(label)).format()}\n")
         }
