@@ -55,7 +55,9 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
                 } else if (command.size == 7 && command[1] == "knn_brief") {
                     return interpretBrief(command, manager, listeners)
                 } else if (command.size >= 8 && command[1] == "groundline") {
-                    return interpretGroundline(command, manager, listeners)
+                    return interpretGroundline(::GroundlineKnn, command, manager, listeners)
+                } else if (command.size >=8 && command[1] == "groundlineMax") {
+                    return interpretGroundline(::GroundlineKmeans, command, manager, listeners)
                 } else if (command.size == 2 && command[1] == "pause") {
                     return simpleResult(CommandType.PAUSE_CLASSIFIER, "Classifier paused")
                 } else if (command.size == 3 && command[1] == "resume") {
@@ -72,7 +74,11 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
     }
 }
 
-fun interpretGroundline(command: List<String>, manager: FileManager, listeners: List<ClassifierListener>): InterpreterResult {
+fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroundline
+            (makeGroundline: (ArrayList<Bitmap>, Int)->G,
+             command: List<String>,
+             manager: FileManager,
+             listeners: List<ClassifierListener>): InterpreterResult {
     val k = Integer.parseInt(command[2])
     val project = command[3]
     if (manager.projectExists(project)) {
@@ -92,7 +98,7 @@ fun interpretGroundline(command: List<String>, manager: FileManager, listeners: 
                     )
                 )
             }
-            val groundline = GroundlineKnn(choices, k)
+            val groundline = makeGroundline(choices, k)
             groundline.addListeners(listeners)
             return createClassifier(groundline,
                 "Activating Groundline: $k $project $label (${width}x${height} $choices")

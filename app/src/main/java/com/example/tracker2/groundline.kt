@@ -44,7 +44,10 @@ fun addColorsFrom(image: Bitmap, rect: Rect, labeledData: ArrayList<Pair<ColorTr
     }
 }
 
-open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>(images: ArrayList<Bitmap>, makeClassifier: (ArrayList<Pair<ColorTriple,Boolean>>)->C) : BitmapClassifier() {
+const val MIN_STREAK = 2
+
+open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
+    (images: ArrayList<Bitmap>, makeClassifier: (ArrayList<Pair<ColorTriple,Boolean>>)->C) : BitmapClassifier() {
     val isFloor = makeClassifier(makeLabeledColorsFrom(images))
     val overlayer = GroundlineOverlayer()
     val width = images[0].width
@@ -55,13 +58,15 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>(images: ArrayLi
         val scaled = Bitmap.createScaledBitmap(image, width, height, false)
         for (x in 0 until width) {
             var y = height - 1
-            while (y > 0) {
+            var notFloorStreak = 0
+            while (y > 0 && notFloorStreak < MIN_STREAK) {
                 val color = tripleFrom(x, y, scaled)
                 if (!isFloor.labelFor(color)) {
-                    break;
+                    notFloorStreak += 1
                 } else {
-                    y -= 1
+                    notFloorStreak = 0
                 }
+                y -= 1
             }
             x2y.add(y)
         }
@@ -100,18 +105,16 @@ fun knnTrainer(labeled: ArrayList<Pair<ColorTriple, Boolean>>, k: Int): KNN<Colo
     return result
 }
 
-class GroundlineKnn(images: ArrayList<Bitmap>, k: Int) :
-    Groundline<KNN<ColorTriple, Boolean, Long>>(images, { knnTrainer(it, k)}) {
+class GroundlineKnn(images: ArrayList<Bitmap>, k: Int)
+    : Groundline<KNN<ColorTriple, Boolean, Long>>(images, { knnTrainer(it, k)}) {
     override fun assess(): String {
         return "Total knn examples: ${isFloor.numExamples()}\n"
     }
 }
 
-fun colorSSD(ct1: ColorTriple, ct2: ColorTriple): Long {
-    return squaredDiffInt(ct1.red, ct2.red) +
-            squaredDiffInt(ct1.green, ct2.green) +
-            squaredDiffInt(ct1.blue, ct2.blue)
-}
+class GroundlineKmeans(images: ArrayList<Bitmap>, k: Int)
+    : Groundline<KMeansClassifier<ColorTriple, Boolean, Long>>(images,
+    { KMeansClassifier(k, ::colorSSD, it, ::colorMean) })
 
 class GroundlineOverlayer : Overlayer {
     private val overlayPaint =

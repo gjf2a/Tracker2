@@ -5,7 +5,7 @@ import kotlin.collections.ArrayList
 import kotlin.math.pow
 
 
-class KMeans<T, N>(k: Int, val distance: (T, T) -> N, data: ArrayList<T>, mean: (ArrayList<T>) -> T)
+class KMeans<T, N>(k: Int, val distance: (T, T) -> N, data: List<T>, mean: (ArrayList<T>) -> T)
     : Iterable<T>
         where N: Number, N: Comparable<N> {
     val means: ArrayList<T> = iterate(k, data, distance, mean)
@@ -33,7 +33,7 @@ fun <T, N> classify(objs: ArrayList<T>, t: T, distance: (T,T)->N): Int
     return best
 }
 
-fun <T, N> plus_plus_randomized(k: Int, data: ArrayList<T>, distance: (T, T) -> N): ArrayList<T>
+fun <T, N> plus_plus_randomized(k: Int, data: List<T>, distance: (T, T) -> N): ArrayList<T>
         where N: Number, N: Comparable<N> {
     val result = ArrayList<T>()
     val candidates = ArrayList<T>(data)
@@ -73,7 +73,7 @@ fun <T, N> closestDistanceTo(selected: ArrayList<T>, candidate: T, distance: (T,
     return min
 }
 
-fun <T, N> iterate(k: Int, data: ArrayList<T>, distance: (T, T) -> N, mean: (ArrayList<T>) -> T): ArrayList<T>
+fun <T, N> iterate(k: Int, data: List<T>, distance: (T, T) -> N, mean: (ArrayList<T>) -> T): ArrayList<T>
         where N: Number, N: Comparable<N>{
     val result = plus_plus_randomized(k, data, distance)
     while (true) {
@@ -98,24 +98,24 @@ fun <T, N> iterate(k: Int, data: ArrayList<T>, distance: (T, T) -> N, mean: (Arr
     }
 }
 
-class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, data: ArrayList<T>,
-                             dataLabels: ArrayList<L>, mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
+class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: ArrayList<Pair<T,L>>,
+                               mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
         where N: Number, N: Comparable<N> {
     val means = ArrayList<T>()
     val labels = ArrayList<L>()
 
     init {
-        assert(data.size == dataLabels.size)
+        val dataLabels = labeledData.unzip()
 
-        val kmeans = KMeans(k, distance, data, mean)
+        val kmeans = KMeans(k, distance, dataLabels.first, mean)
         val meanCounts = ArrayList<Histogram<L>>()
         for (i in 0 until kmeans.k()) {
             meanCounts.add(Histogram())
         }
 
-        for (i in 0 until dataLabels.size) {
-            val bestMean = kmeans.classification(data[i])
-            meanCounts[bestMean].bump(dataLabels[i])
+        for (i in 0 until labeledData.size) {
+            val bestMean = kmeans.classification(dataLabels.first[i])
+            meanCounts[bestMean].bump(dataLabels.second[i])
         }
 
         for (i in 0 until kmeans.k()) {
