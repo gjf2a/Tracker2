@@ -7,6 +7,16 @@ import java.io.PrintWriter
 import java.util.*
 import kotlin.math.pow
 
+val kmeansSamples = arrayListOf(1, 2, 3, 1001, 1002, 1003, 2001, 2002, 2003, 3001, 3002, 3003)
+
+fun intDist(x: Int, y: Int): Double {
+    return (x - y).toDouble().pow(2)
+}
+
+fun intMean(nums: ArrayList<Int>): Int {
+    return nums.sum() / nums.size
+}
+
 class UnitTests {
     @Test
     fun histogramTest() {
@@ -46,10 +56,19 @@ class UnitTests {
 
     @Test
     fun kmeansTest() {
-        val values = arrayListOf(1, 2, 3, 1001, 1002, 1003, 2001, 2002, 2003, 3001, 3002, 3003)
-        val means = KMeans(4, {x, y -> (x - y).toDouble().pow(2)}, values, {nums -> nums.sum() / nums.size})
+        val means = KMeans(4, ::intDist, kmeansSamples, {nums -> nums.sum() / nums.size})
         for (target in arrayOf(2, 1002, 2002, 3002)) {
             assert(means.contains(target))
+        }
+    }
+
+    @Test
+    fun kmeansClassifierTest() {
+        val kmeansLabels = arrayListOf('a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c', 'd', 'd', 'd')
+        val classifier = KMeansClassifier(4, ::intDist, kmeansSamples, kmeansLabels, ::intMean)
+        for (p in arrayOf(Pair(50, 'a'), Pair(400, 'a'), Pair(600, 'b'), Pair(1400, 'b'),
+            Pair(1800, 'c'), Pair(2100, 'c'), Pair(2700, 'd'))) {
+            assert(classifier.labelFor(p.first) == p.second)
         }
     }
 
