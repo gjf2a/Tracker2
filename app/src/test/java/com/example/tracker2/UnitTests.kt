@@ -65,7 +65,8 @@ class UnitTests {
     @Test
     fun kmeansClassifierTest() {
         val kmeansLabels = arrayListOf('a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c', 'd', 'd', 'd')
-        val classifier = KMeansClassifier(4, ::intDist, kmeansSamples, kmeansLabels, ::intMean)
+        val kmeansData = kmeansSamples.zip(kmeansLabels)
+        val classifier = KMeansClassifier(4, ::intDist, kmeansData, ::intMean)
         for (p in arrayOf(Pair(50, 'a'), Pair(400, 'a'), Pair(600, 'b'), Pair(1400, 'b'),
             Pair(1800, 'c'), Pair(2100, 'c'), Pair(2700, 'd'))) {
             assert(classifier.labelFor(p.first) == p.second)
@@ -161,5 +162,16 @@ class UnitTests {
         assert(history == history2)
 
         file.delete()
+    }
+
+    @Test
+    fun minHeightTest() {
+        val example1 = arrayListOf(27, 27, 27, 27, 27, 13, 13, 13, 13, 13, 13, 11, 11, 10, 10, 10, 10, 11, 10, 12, 12, 12, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 27, 27, 27, 27)
+        val highest1 = highestPoint(example1)
+        assert(highest1 == Pair(18, 10))
+
+        val example2 = arrayListOf(16, 13, 16, 13, 16, 12, 14, 13, 13, 10, 10, 10, 13, 9, 9, 9, 9, 9, 9, 9, 10, 10, 11, 11, 12, 12, 12, 12, 12, 12, 12, 5, 1, 1, 5, 6, 8, 9, 10, 12)
+        val highest2 = highestPoint(example2)
+        assert(highest2 == Pair(32, 1))
     }
 }

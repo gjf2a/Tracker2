@@ -98,7 +98,7 @@ fun <T, N> iterate(k: Int, data: List<T>, distance: (T, T) -> N, mean: (ArrayLis
     }
 }
 
-class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: ArrayList<Pair<T,L>>,
+class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: List<Pair<T,L>>,
                                mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
         where N: Number, N: Comparable<N> {
     val means = ArrayList<T>()

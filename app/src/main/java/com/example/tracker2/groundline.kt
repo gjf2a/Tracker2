@@ -57,18 +57,7 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
         val x2y = ArrayList<Int>()
         val scaled = Bitmap.createScaledBitmap(image, width, height, false)
         for (x in 0 until width) {
-            var y = height - 1
-            var notFloorStreak = 0
-            while (y > 0 && notFloorStreak < MIN_STREAK) {
-                val color = tripleFrom(x, y, scaled)
-                if (!isFloor.labelFor(color)) {
-                    notFloorStreak += 1
-                } else {
-                    notFloorStreak = 0
-                }
-                y -= 1
-            }
-            x2y.add(y)
+            x2y.add(findNotFloor(scaled, x))
         }
         overlayer.updateHeights(x2y, height)
         Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
@@ -76,16 +65,18 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
         notifyListeners("$best")
     }
 
-    fun highestPoint(heights: ArrayList<Int>): Pair<Int,Int> {
-        var xBest = 0
-        var yBest = heights[0]
-        for (x in 1 until heights.size) {
-            if (heights[x] < yBest) {
-                xBest = x
-                yBest = heights[x]
+    private fun findNotFloor(scaled: Bitmap, x: Int): Int {
+        var y = scaled.height - 1
+        var notFloorStreak = 0
+        while (y > 0 && notFloorStreak < MIN_STREAK) {
+            notFloorStreak = if (!isFloor.labelFor(tripleFrom(x, y, scaled))) {
+                notFloorStreak + 1
+            } else {
+                0
             }
+            y -= 1
         }
-        return Pair(xBest, yBest)
+        return y
     }
 
     override fun assess(): String {
@@ -95,6 +86,23 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
     override fun overlayers(): ArrayList<Overlayer> {
         return arrayListOf(overlayer)
     }
+}
+
+// Pattern: Say width is 12;
+// 6, 5, 7, 4, 8, 3, 9, 2, 10, 1, 11, 0
+// 0, -1, +2, -3, +4, -5, +6, -7, +8, -9, +10, -11
+fun highestPoint(heights: ArrayList<Int>): Pair<Int,Int> {
+    var x = heights.size / 2
+    var xBest = x
+    var yBest = heights[xBest]
+    for (offset in 1 until heights.size) {
+        x += if (offset % 2 == 0) {offset} else {-offset}
+        if (heights[x] < yBest) {
+            xBest = x
+            yBest = heights[x]
+        }
+    }
+    return Pair(xBest, yBest)
 }
 
 fun knnTrainer(labeled: ArrayList<Pair<ColorTriple, Boolean>>, k: Int): KNN<ColorTriple, Boolean, Long> {
