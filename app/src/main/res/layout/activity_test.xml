@@ -29,11 +29,11 @@
 
     <!--android:text="Commands:\ncv knn k project width height\ncv knn_brief k project width height numPairs\ncv pause\ncv resume id\n"-->
     <TextView
-        android:text="Commands:\ncv knn k project width height\ncv pause\ncv resume id\n"
+        android:text="Commands:\ncv knn k project width height\ncv groundline maxColors minNotFloor project label width height [photoNums]\ncv pause\ncv resume id\n"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        app:layout_constraintLeft_toRightOf="@id/command_tester"
-        app:layout_constraintTop_toBottomOf="@id/old_commands"
+        app:layout_constraintLeft_toRightOf="@id/test_to_robot"
+        app:layout_constraintTop_toBottomOf="@id/command_tester"
         />
 
     <EditText

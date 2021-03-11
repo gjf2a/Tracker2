@@ -9,8 +9,7 @@ fun getFloorRect(width: Int, height: Int): Rect {
     val left = (width - rectWidth) / 2
     val right = left + rectWidth
     val top = height - rectHeight
-    val bottom = height
-    return Rect(left, top, right, bottom)
+    return Rect(left, top, right, height)
 }
 
 fun getUpperLeftRect(width: Int, height: Int): Rect {
@@ -44,10 +43,8 @@ fun addColorsFrom(image: Bitmap, rect: Rect, labeledData: ArrayList<Pair<ColorTr
     }
 }
 
-const val MIN_STREAK = 2
-
 open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
-    (images: ArrayList<Bitmap>, makeClassifier: (ArrayList<Pair<ColorTriple,Boolean>>)->C) : BitmapClassifier() {
+    (images: ArrayList<Bitmap>, val minNotFloor: Int, makeClassifier: (ArrayList<Pair<ColorTriple,Boolean>>)->C) : BitmapClassifier() {
     val isFloor = makeClassifier(makeLabeledColorsFrom(images))
     val overlayer = GroundlineOverlayer()
     val width = images[0].width
@@ -59,16 +56,16 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
         for (x in 0 until width) {
             x2y.add(findNotFloor(scaled, x))
         }
-        overlayer.updateHeights(x2y, height)
-        Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
         val best = highestPoint(x2y)
+        overlayer.updateHeights(x2y, height, best.first)
+        Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
         notifyListeners("$best")
     }
 
     private fun findNotFloor(scaled: Bitmap, x: Int): Int {
         var y = scaled.height - 1
         var notFloorStreak = 0
-        while (y > 0 && notFloorStreak < MIN_STREAK) {
+        while (y > 0 && notFloorStreak < minNotFloor) {
             notFloorStreak = if (!isFloor.labelFor(tripleFrom(x, y, scaled))) {
                 notFloorStreak + 1
             } else {
@@ -113,41 +110,49 @@ fun knnTrainer(labeled: ArrayList<Pair<ColorTriple, Boolean>>, k: Int): KNN<Colo
     return result
 }
 
-class GroundlineKnn(images: ArrayList<Bitmap>, k: Int)
-    : Groundline<KNN<ColorTriple, Boolean, Long>>(images, { knnTrainer(it, k)}) {
+class GroundlineKnn(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int)
+    : Groundline<KNN<ColorTriple, Boolean, Long>>(images, minNotFloor, { knnTrainer(it, k)}) {
     override fun assess(): String {
         return "Total knn examples: ${isFloor.numExamples()}\n"
     }
 }
 
-class GroundlineKmeans(images: ArrayList<Bitmap>, k: Int)
-    : Groundline<KMeansClassifier<ColorTriple, Boolean, Long>>(images,
+class GroundlineKmeans(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int)
+    : Groundline<KMeansClassifier<ColorTriple, Boolean, Long>>(images, minNotFloor,
     { KMeansClassifier(k, ::colorSSD, it, ::colorMean) })
 
 class GroundlineOverlayer : Overlayer {
-    private val overlayPaint =
-        Paint().apply {
+    private val groundlinePaint = Paint().apply {
             isAntiAlias = true
             color = Color.WHITE
             style = Paint.Style.STROKE
         }
 
-    val heights = ArrayList<Int>()
-    var maxHeight = 0
+    private val highestPaint = Paint().apply {
+        isAntiAlias = true
+        color = Color.RED
+        style = Paint.Style.STROKE
+    }
+
+    var heights = ArrayList<Int>()
+    var imageHeight = 0
+    var highestX = 0
 
     override fun draw(canvas: Canvas) {
         for (x in 0 until heights.size - 1) {
             val x1Scaled = canvas.width * x.toFloat() / heights.size
             val x2Scaled = canvas.width * (x + 1).toFloat() / heights.size
-            val y1Scaled = canvas.height * heights[x].toFloat() / maxHeight
-            val y2Scaled = canvas.height * heights[x + 1].toFloat() / maxHeight
-            canvas.drawLine(x1Scaled, y1Scaled, x2Scaled, y2Scaled, overlayPaint)
+            val y1Scaled = canvas.height * heights[x].toFloat() / imageHeight
+            val y2Scaled = canvas.height * heights[x + 1].toFloat() / imageHeight
+            canvas.drawLine(x1Scaled, y1Scaled, x2Scaled, y2Scaled, groundlinePaint)
         }
+        val x = highestX.toFloat()
+        canvas.drawLine(x, 0.0f, x, canvas.height.toFloat(), highestPaint)
     }
 
-    fun updateHeights(updated: ArrayList<Int>, updatedHeight: Int) {
-        heights.clear()
-        heights.addAll(updated)
-        maxHeight = updatedHeight
+    fun updateHeights(updated: ArrayList<Int>, imageHeight: Int, highestX: Int) {
+        this.heights = updated
+        this.imageHeight = imageHeight
+        this.highestX = highestX
     }
 }
