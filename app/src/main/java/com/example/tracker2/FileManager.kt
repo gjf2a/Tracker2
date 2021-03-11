@@ -81,8 +81,21 @@ class FileManager(var baseDir: File) {
 
     fun loadImage(projectName: String, label: String, index: Int, scaledWidth: Int, scaledHeight: Int): Bitmap {
         val i = index % numImagesFor(projectName, label)
-        val imageFile = imageFilesFor(projectName, label)[i]
+        return bitmapFor(imageFilesFor(projectName, label)[i], scaledWidth, scaledHeight)
+    }
+
+    fun bitmapFor(imageFile: File, scaledWidth: Int, scaledHeight: Int): Bitmap {
         return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(imageFile.path), scaledWidth, scaledHeight, false)
+    }
+
+    fun allProjectImages(projectName: String, scaledWidth: Int, scaledHeight: Int): ArrayList<Pair<Bitmap,String>> {
+        val result = ArrayList<Pair<Bitmap,String>>()
+        for (label in allLabelsIn(projectName)) {
+            for (imageFile in imageFilesFor(projectName, label)) {
+                result.add(Pair(bitmapFor(imageFile, scaledWidth, scaledHeight), label))
+            }
+        }
+        return result
     }
 
     fun moveFileTo(file: File, projectName: String, label: String) {

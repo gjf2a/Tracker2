@@ -1,8 +1,16 @@
 package com.example.tracker2
 
 import android.graphics.Bitmap
+import android.graphics.Color
 
-class ColorTriple(var red: Int, var green: Int, var blue: Int)
+class ColorTriple(var red: Int, var green: Int, var blue: Int) {
+    fun toIntColor(): Int {
+        return Color.argb(255,
+            red.coerceAtMost(255),
+            green.coerceAtMost(255),
+            blue.coerceAtMost(255))
+    }
+}
 
 operator fun ColorTriple.plusAssign(other: ColorTriple) {
     red += other.red
@@ -14,6 +22,10 @@ operator fun ColorTriple.divAssign(scalar: Int) {
     red /= scalar
     green /= scalar
     blue /= scalar
+}
+
+operator fun ColorTriple.div(scalar: Int): ColorTriple {
+    return ColorTriple(red / scalar, green / scalar, blue / scalar)
 }
 
 fun tripleFrom(x: Int, y: Int, image: Bitmap): ColorTriple {
@@ -28,14 +40,6 @@ fun get8bits(color: Int, rightShift: Int): Int {
 fun squaredDiffInt(c1: Int, c2: Int): Long {
     val diff = (c1 - c2).toLong();
     return diff * diff
-}
-
-fun singlePixelSSD(color1: Int, color2: Int): Long {
-    var sum: Long = 0
-    for (rightShift in 0..24 step 8) {
-        sum += squaredDiffInt(get8bits(color1, rightShift), get8bits(color2, rightShift))
-    }
-    return sum
 }
 
 fun colorSSD(ct1: ColorTriple, ct2: ColorTriple): Long {

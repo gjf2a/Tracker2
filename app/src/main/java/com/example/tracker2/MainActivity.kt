@@ -309,38 +309,6 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     }
 }
 
-abstract class BitmapClassifier {
-    private val listeners = ArrayList<ClassifierListener>()
-
-    fun addListener(listener: ClassifierListener) {
-        listeners.add(listener)
-    }
-
-    fun addListeners(listeners: Iterable<ClassifierListener>) {
-        for (listener in listeners) {
-            addListener(listener)
-        }
-    }
-
-    fun notifyListeners(msg: String) {
-        for (listener in listeners) {
-            listener.receiveClassification(msg)
-        }
-    }
-
-    abstract fun classify(image: Bitmap)
-    abstract fun assess(): String
-    open fun overlayers(): ArrayList<Overlayer> {return ArrayList()}
-}
-
-class DummyClassifier : BitmapClassifier() {
-    override fun classify(image: Bitmap) {}
-
-    override fun assess(): String {
-        return "No assessment\n"
-    }
-}
-
 class BitmapAnalyzer(val converter: YuvBitmapConverter, val complaintsTo: MessageReceiver) : ImageAnalysis.Analyzer {
     private var classifiers = ArrayList<BitmapClassifier>()
     var fpsListeners = ArrayList<FPSReceiver>()

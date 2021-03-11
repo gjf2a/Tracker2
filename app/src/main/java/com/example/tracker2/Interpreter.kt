@@ -54,6 +54,8 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
                     return interpretKnn(command, manager, listeners)
                 } else if (command.size == 7 && command[1] == "knn_brief") {
                     return interpretBrief(command, manager, listeners)
+                } else if (command.size == 6 && command[1] == "kmeans") {
+                    return interpretKmeans(command, manager, listeners)
                 } else if (command.size >= 8 && command[1] == "groundline") {
                     return interpretGroundline(::GroundlineKmeans, command, manager, listeners)
                 } else if (command.size == 2 && command[1] == "pause") {
@@ -69,6 +71,20 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
         }
     } catch (nfe: NumberFormatException) {
         return simpleResult(CommandType.ERROR, "Integer expected")
+    }
+}
+
+fun interpretKmeans(command: List<String>, manager: FileManager, listeners: List<ClassifierListener>): InterpreterResult {
+    val k = Integer.parseInt(command[2])
+    val project = command[3]
+    return if (manager.projectExists(project)) {
+        val width = Integer.parseInt(command[4])
+        val height = Integer.parseInt(command[5])
+        val kmeans = KmeansBitmapClassifier(k, project, manager, width, height)
+        kmeans.addListeners(listeners)
+        createClassifier(kmeans, "Activating kMeans classifer; k=$k; project=$project\n")
+    } else {
+        simpleResult(CommandType.ERROR,"Project $project does not exist")
     }
 }
 
