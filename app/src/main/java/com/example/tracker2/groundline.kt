@@ -146,7 +146,7 @@ class GroundlineOverlayer : Overlayer {
             val y2Scaled = canvas.height * heights[x + 1].toFloat() / imageHeight
             canvas.drawLine(x1Scaled, y1Scaled, x2Scaled, y2Scaled, groundlinePaint)
         }
-        val x = highestX.toFloat()
+        val x = highestX.toFloat() * canvas.width.toFloat() / heights.size.toFloat()
         canvas.drawLine(x, 0.0f, x, canvas.height.toFloat(), highestPaint)
     }
 

@@ -100,7 +100,7 @@ fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroun
             val groundline = makeGroundline(choices, maxColors, minNotFloor)
             groundline.addListeners(listeners)
             return createClassifier(groundline,
-                "Activating Groundline: $maxColors $project $label (${width}x${height}")
+                "Activating Groundline: $maxColors $project $label (${width}x${height})")
         } else {
             return simpleResult(CommandType.ERROR,"Label '$label' does not exist")
         }
