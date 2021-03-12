@@ -19,6 +19,10 @@ class KNN<T,L,D: Comparable<D>>(val distance: (T,T) -> D, val k: Int) : SimpleCl
         this.examples.addAll(examples)
     }
 
+    override fun toString(): String {
+        return "KNN($k):$examples"
+    }
+
     override fun labelFor(example: T): L {
         val distances = examples.map { Pair(distance(it.first, example), it.second) }.sortedBy { it.first}
         val votes = Histogram<L>()

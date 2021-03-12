@@ -8,6 +8,7 @@ import java.util.*
 import kotlin.math.pow
 
 val kmeansSamples = arrayListOf(1, 2, 3, 1001, 1002, 1003, 2001, 2002, 2003, 3001, 3002, 3003)
+val kmeansLabels = arrayListOf('a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c', 'd', 'd', 'd')
 
 fun intDist(x: Int, y: Int): Double {
     return (x - y).toDouble().pow(2)
@@ -48,7 +49,7 @@ class UnitTests {
         d.add('a', 2.0)
         d.add('b', 4.0)
         for (i in 0 until 10000) {
-            h.bump(d.random_pick())
+            h.bump(d.randomPick())
         }
         assert(is_approx_eq(h.portion('a'), 0.33, 0.1))
         assert(is_approx_eq(h.portion('b'), 0.67, 0.1))
@@ -56,15 +57,31 @@ class UnitTests {
 
     @Test
     fun kmeansTest() {
-        val means = KMeans(4, ::intDist, kmeansSamples, {nums -> nums.sum() / nums.size})
+        val means = KMeans(4, ::intDist, kmeansSamples) { it.sum() / it.size}
         for (target in arrayOf(2, 1002, 2002, 3002)) {
             assert(means.contains(target))
         }
     }
 
     @Test
+    fun knnTest() {
+        val classifier = KNN<Int, Char, Double>(::intDist, 3)
+        for (i in kmeansLabels.indices) {
+            classifier.addExample(kmeansSamples[i], kmeansLabels[i])
+        }
+        for (test in arrayOf(1002, 3002, 2, 2002).zip(arrayOf('b', 'd', 'a', 'c'))) {
+            assert(classifier.labelFor(test.first) == test.second)
+        }
+    }
+
+    @Test
+    fun kmeansUnderflowTest() {
+        val means = KMeans(13, ::intDist, kmeansSamples) { it.sum() / it.size}
+        println(means.means)
+    }
+
+    @Test
     fun kmeansClassifierTest() {
-        val kmeansLabels = arrayListOf('a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c', 'd', 'd', 'd')
         val kmeansData = kmeansSamples.zip(kmeansLabels)
         val classifier = KMeansClassifier(4, ::intDist, kmeansData, ::intMean)
         for (p in arrayOf(Pair(50, 'a'), Pair(400, 'a'), Pair(600, 'b'), Pair(1400, 'b'),

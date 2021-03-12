@@ -32,4 +32,8 @@ class Histogram<T> : Iterable<MutableMap.MutableEntry<T,Int>> {
     override fun iterator(): Iterator<MutableMap.MutableEntry<T, Int>> {
         return counts.entries.iterator()
     }
+
+    fun minCount(): Int? {
+        return counts.values.minOrNull()
+    }
 }

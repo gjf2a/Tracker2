@@ -11,11 +11,12 @@ class Distribution<T> {
     var totalWeight: Double = 0.0
 
     fun add(value: T, weight: Double) {
-        distro.put(totalWeight, value)
+        assert(weight > 0.0)
+        distro[totalWeight] = value
         totalWeight += weight
     }
 
-    fun random_pick(): T {
+    fun randomPick(): T {
         val num = ThreadLocalRandom.current().nextDouble(totalWeight)
         return distro.floorEntry(num)!!.value
     }

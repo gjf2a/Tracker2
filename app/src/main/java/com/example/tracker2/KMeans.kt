@@ -33,11 +33,14 @@ fun <T, N> classify(objs: ArrayList<T>, t: T, distance: (T,T)->N): Int
     return best
 }
 
-fun <T, N> plus_plus_randomized(k: Int, data: List<T>, distance: (T, T) -> N): ArrayList<T>
+fun <T, N> plusPlusRandomized(k: Int, data: List<T>, distance: (T, T) -> N): ArrayList<T>
         where N: Number, N: Comparable<N> {
     val result = ArrayList<T>()
     val candidates = ArrayList<T>(data)
-    val first = ThreadLocalRandom.current().nextInt(data.size)
+    while (candidates.size < k) {
+        candidates.add(data[ThreadLocalRandom.current().nextInt(data.size)])
+    }
+    val first = ThreadLocalRandom.current().nextInt(candidates.size)
     result.add(swapRemove(first, candidates))
 
     for (i in 0 until k-1) {
@@ -45,7 +48,7 @@ fun <T, N> plus_plus_randomized(k: Int, data: List<T>, distance: (T, T) -> N): A
         for (j in 0 until candidates.size) {
             distro.add(j, 1 + closestDistanceTo(result, candidates[j], distance).toDouble().pow(2))
         }
-        val pick = distro.random_pick()
+        val pick = distro.randomPick()
         result.add(swapRemove(pick, candidates))
     }
     return result
@@ -75,7 +78,7 @@ fun <T, N> closestDistanceTo(selected: ArrayList<T>, candidate: T, distance: (T,
 
 fun <T, N> iterate(k: Int, data: List<T>, distance: (T, T) -> N, mean: (ArrayList<T>) -> T): ArrayList<T>
         where N: Number, N: Comparable<N>{
-    val result = plus_plus_randomized(k, data, distance)
+    val result = plusPlusRandomized(k, data, distance)
     while (true) {
         val classifications = ArrayList<ArrayList<T>>()
         for (i in 0 until k) {
@@ -109,8 +112,13 @@ class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: L
         val dataLabels = labeledData.unzip()
         val kmeans = KMeans(k, distance, dataLabels.first, mean)
         val numLabels = numDistinctLabels(labeledData)
-        val labeler = KNN<T, L, N>(distance, 2 * numLabels - 1)
+        var labelK = (2 * numLabels - 1)
+            .coerceAtMost(minExamplesPerLabel(labeledData))
+            .coerceAtLeast(1)
+        labelK += if (labelK % 2 == 0) {1} else {0}
+        val labeler = KNN<T, L, N>(distance, labelK)
         labeler.addAllExamples(labeledData)
+        println("labeler: $labeler")
 
         for (kmean in kmeans.means) {
             means.add(kmean)
@@ -134,10 +142,39 @@ class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: L
     }
 }
 
+fun <T,L,N> clustersByLabel(labeledData: List<Pair<T,L>>, clustersPerLabel: Int, distance: (T, T) -> N, mean: (ArrayList<T>)->T): HashMap<L,KMeans<T,N>>
+    where N: Number, N: Comparable<N> {
+    val result = HashMap<L,KMeans<T,N>>()
+    for (labelData in examplesByLabel(labeledData)) {
+        result[labelData.key] = KMeans(clustersPerLabel, distance, labelData.value, mean)
+        // TODO: Pick right back up here.
+    }
+    return result
+}
+
+fun <T,L> examplesByLabel(labeledData: List<Pair<T,L>>): HashMap<L,ArrayList<T>> {
+    val result = HashMap<L,ArrayList<T>>()
+    for (dataLabel in labeledData) {
+        if (!result.containsKey(dataLabel.second)) {
+            result[dataLabel.second] = ArrayList()
+        }
+        result[dataLabel.second]!!.add(dataLabel.first)
+    }
+    return result
+}
+
 fun <T,L> numDistinctLabels(labeledData: List<Pair<T,L>>): Int {
     val labels = HashSet<L>()
     for (dataLabel in labeledData) {
         labels.add(dataLabel.second)
     }
     return labels.size
+}
+
+fun <T,L> minExamplesPerLabel(labeledData: List<Pair<T,L>>): Int {
+    val counts = Histogram<L>()
+    for (dataLabel in labeledData) {
+        counts.bump(dataLabel.second)
+    }
+    return counts.minCount()!!
 }
