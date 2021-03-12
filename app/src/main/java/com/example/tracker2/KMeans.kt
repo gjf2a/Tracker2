@@ -108,7 +108,8 @@ class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: L
     init {
         val dataLabels = labeledData.unzip()
         val kmeans = KMeans(k, distance, dataLabels.first, mean)
-        val labeler = KNN<T, L, N>(distance, 3)
+        val numLabels = numDistinctLabels(labeledData)
+        val labeler = KNN<T, L, N>(distance, 2 * numLabels - 1)
         labeler.addAllExamples(labeledData)
 
         for (kmean in kmeans.means) {
@@ -131,4 +132,12 @@ class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: L
         val mean = classify(means, example, distance)
         return labels[mean]
     }
+}
+
+fun <T,L> numDistinctLabels(labeledData: List<Pair<T,L>>): Int {
+    val labels = HashSet<L>()
+    for (dataLabel in labeledData) {
+        labels.add(dataLabel.second)
+    }
+    return labels.size
 }
