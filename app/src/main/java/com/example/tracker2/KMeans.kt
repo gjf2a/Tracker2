@@ -101,8 +101,8 @@ fun <T, N> iterate(k: Int, data: List<T>, distance: (T, T) -> N, mean: (ArrayLis
     }
 }
 
-class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: List<Pair<T,L>>,
-                               mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
+class KMeansClassifier1<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: List<Pair<T,L>>,
+                                mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
         where N: Number, N: Comparable<N> {
     val means = ArrayList<T>()
     val labels = ArrayList<L>()
@@ -118,18 +118,41 @@ class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: L
         labelK += if (labelK % 2 == 0) {1} else {0}
         val labeler = KNN<T, L, N>(distance, labelK)
         labeler.addAllExamples(labeledData)
-        println("labeler: $labeler")
 
         for (kmean in kmeans.means) {
             means.add(kmean)
             labels.add(labeler.labelFor(kmean))
         }
 
-        val accuracy = ConfusionMatrix<L>()
-        for (dataLabel in labeledData) {
-            accuracy.resultFor(dataLabel.second, labelFor(dataLabel.first))
+        assessment = assess(labeledData, this).summary()
+    }
+
+    override fun iterator(): Iterator<T> {
+        return means.iterator()
+    }
+
+    override fun labelFor(example: T): L {
+        val mean = classify(means, example, distance)
+        return labels[mean]
+    }
+}
+
+class KMeansClassifier2<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: List<Pair<T,L>>,
+                                mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
+        where N: Number, N: Comparable<N> {
+    val means = ArrayList<T>()
+    val labels = ArrayList<L>()
+    val assessment: String
+
+    init {
+        val clusters = clustersByLabel(labeledData, k, distance, mean)
+        for (labelCluster in clusters) {
+            for (cluster in labelCluster.value) {
+                means.add(cluster)
+                labels.add(labelCluster.key)
+            }
         }
-        assessment = accuracy.summary()
+        assessment = assess(labeledData, this).summary()
     }
 
     override fun iterator(): Iterator<T> {
@@ -147,7 +170,6 @@ fun <T,L,N> clustersByLabel(labeledData: List<Pair<T,L>>, clustersPerLabel: Int,
     val result = HashMap<L,KMeans<T,N>>()
     for (labelData in examplesByLabel(labeledData)) {
         result[labelData.key] = KMeans(clustersPerLabel, distance, labelData.value, mean)
-        // TODO: Pick right back up here.
     }
     return result
 }

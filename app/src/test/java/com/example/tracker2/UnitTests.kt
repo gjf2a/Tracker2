@@ -76,14 +76,26 @@ class UnitTests {
 
     @Test
     fun kmeansUnderflowTest() {
-        val means = KMeans(13, ::intDist, kmeansSamples) { it.sum() / it.size}
-        println(means.means)
+        val means = KMeans(kmeansSamples.size + 1, ::intDist, kmeansSamples) { it.sum() / it.size}
+        for (sample in kmeansSamples) {
+            assert(means.means.contains(sample))
+        }
     }
 
     @Test
     fun kmeansClassifierTest() {
         val kmeansData = kmeansSamples.zip(kmeansLabels)
-        val classifier = KMeansClassifier(4, ::intDist, kmeansData, ::intMean)
+        val classifier = KMeansClassifier1(4, ::intDist, kmeansData, ::intMean)
+        for (p in arrayOf(Pair(50, 'a'), Pair(400, 'a'), Pair(600, 'b'), Pair(1400, 'b'),
+            Pair(1800, 'c'), Pair(2100, 'c'), Pair(2700, 'd'))) {
+            assert(classifier.labelFor(p.first) == p.second)
+        }
+    }
+
+    @Test
+    fun kmeansClassifier2Test() {
+        val kmeansData = kmeansSamples.zip(kmeansLabels)
+        val classifier = KMeansClassifier2(2, ::intDist, kmeansData, ::intMean)
         for (p in arrayOf(Pair(50, 'a'), Pair(400, 'a'), Pair(600, 'b'), Pair(1400, 'b'),
             Pair(1800, 'c'), Pair(2100, 'c'), Pair(2700, 'd'))) {
             assert(classifier.labelFor(p.first) == p.second)

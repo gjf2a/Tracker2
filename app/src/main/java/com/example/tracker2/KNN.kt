@@ -75,3 +75,11 @@ class ConfusionMatrix<L> {
         return result.toString()
     }
 }
+
+fun <T,L> assess(testExamples: List<Pair<T,L>>, classifier: SimpleClassifier<T,L>): ConfusionMatrix<L> {
+    val result = ConfusionMatrix<L>()
+    for (test in testExamples) {
+        result.resultFor(test.second, classifier.labelFor(test.first))
+    }
+    return result
+}
