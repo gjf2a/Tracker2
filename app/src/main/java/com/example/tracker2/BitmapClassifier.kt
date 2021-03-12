@@ -3,7 +3,6 @@ package com.example.tracker2
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.core.graphics.set
 
 abstract class BitmapClassifier {
     private val listeners = java.util.ArrayList<ClassifierListener>()
@@ -109,7 +108,7 @@ class KmeansBitmapClassifier(k: Int, projectName: String, files: FileManager, va
     }
 
     override fun assess(): String {
-        return "Not yet implemented"
+        return kmeans.assessment
     }
 
 }

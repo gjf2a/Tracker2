@@ -103,27 +103,24 @@ class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: L
         where N: Number, N: Comparable<N> {
     val means = ArrayList<T>()
     val labels = ArrayList<L>()
+    val assessment: String
 
     init {
         val dataLabels = labeledData.unzip()
-
         val kmeans = KMeans(k, distance, dataLabels.first, mean)
-        val meanCounts = ArrayList<Histogram<L>>()
-        for (i in 0 until kmeans.k()) {
-            meanCounts.add(Histogram())
+        val labeler = KNN<T, L, N>(distance, 3)
+        labeler.addAllExamples(labeledData)
+
+        for (kmean in kmeans.means) {
+            means.add(kmean)
+            labels.add(labeler.labelFor(kmean))
         }
 
-        for (i in 0 until labeledData.size) {
-            val bestMean = kmeans.classification(dataLabels.first[i])
-            meanCounts[bestMean].bump(dataLabels.second[i])
+        val accuracy = ConfusionMatrix<L>()
+        for (dataLabel in labeledData) {
+            accuracy.resultFor(dataLabel.second, labelFor(dataLabel.first))
         }
-
-        for (i in 0 until kmeans.k()) {
-            if (meanCounts[i].totalCount > 0) {
-                means.add(kmeans.means[i])
-                labels.add(meanCounts[i].pluralityLabel())
-            }
-        }
+        assessment = accuracy.summary()
     }
 
     override fun iterator(): Iterator<T> {
