@@ -85,7 +85,7 @@ class UnitTests {
     @Test
     fun kmeansClassifierTest() {
         val kmeansData = kmeansSamples.zip(kmeansLabels)
-        val classifier = KMeansClassifier1(4, ::intDist, kmeansData, ::intMean)
+        val classifier = KMeansClassifierAggregated(4, ::intDist, kmeansData, ::intMean)
         for (p in arrayOf(Pair(50, 'a'), Pair(400, 'a'), Pair(600, 'b'), Pair(1400, 'b'),
             Pair(1800, 'c'), Pair(2100, 'c'), Pair(2700, 'd'))) {
             assert(classifier.labelFor(p.first) == p.second)
@@ -95,7 +95,7 @@ class UnitTests {
     @Test
     fun kmeansClassifier2Test() {
         val kmeansData = kmeansSamples.zip(kmeansLabels)
-        val classifier = KMeansClassifier2(2, ::intDist, kmeansData, ::intMean)
+        val classifier = KMeansClassifier(2, ::intDist, kmeansData, ::intMean)
         for (p in arrayOf(Pair(50, 'a'), Pair(400, 'a'), Pair(600, 'b'), Pair(1400, 'b'),
             Pair(1800, 'c'), Pair(2100, 'c'), Pair(2700, 'd'))) {
             assert(classifier.labelFor(p.first) == p.second)

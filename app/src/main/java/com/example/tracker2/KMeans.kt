@@ -101,8 +101,15 @@ fun <T, N> iterate(k: Int, data: List<T>, distance: (T, T) -> N, mean: (ArrayLis
     }
 }
 
-class KMeansClassifier1<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: List<Pair<T,L>>,
-                                mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
+// I am keeping this around for research purposes.
+// This version aggregates all samples into a single KMeans classifier. It then uses KNN to
+// determine their labels.
+//
+// In a few experiments I tried, a version that clusters the examples for each label separately
+// worked massively better. But I would like to investigate this more systematically; hence, I am
+// keeping this code around.
+class KMeansClassifierAggregated<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: List<Pair<T,L>>,
+                                         mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
         where N: Number, N: Comparable<N> {
     val means = ArrayList<T>()
     val labels = ArrayList<L>()
@@ -137,8 +144,8 @@ class KMeansClassifier1<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: 
     }
 }
 
-class KMeansClassifier2<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: List<Pair<T,L>>,
-                                mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
+class KMeansClassifier<T,L,N> (k: Int, val distance: (T, T) -> N, labeledData: List<Pair<T,L>>,
+                               mean: (ArrayList<T>) -> T) : Iterable<T>, SimpleClassifier<T, L>
         where N: Number, N: Comparable<N> {
     val means = ArrayList<T>()
     val labels = ArrayList<L>()

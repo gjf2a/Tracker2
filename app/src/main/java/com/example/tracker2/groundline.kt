@@ -118,8 +118,8 @@ class GroundlineKnn(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int)
 }
 
 class GroundlineKmeans(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int)
-    : Groundline<KMeansClassifier2<ColorTriple, Boolean, Long>>(images, minNotFloor,
-    { KMeansClassifier2(k, ::colorSSD, it, ::colorMean) })
+    : Groundline<KMeansClassifier<ColorTriple, Boolean, Long>>(images, minNotFloor,
+    { KMeansClassifier(k, ::colorSSD, it, ::colorMean) })
 
 class GroundlineOverlayer : Overlayer {
     private val groundlinePaint = Paint().apply {

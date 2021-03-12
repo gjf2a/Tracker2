@@ -99,7 +99,7 @@ class KnnClassifier(k: Int, projectName: String, files: FileManager, val scaleWi
 
 class KmeansBitmapClassifier(k: Int, projectName: String, files: FileManager, val scaleWidth: Int,
                              val scaleHeight: Int) : BitmapClassifier() {
-    var kmeans = KMeansClassifier2(k, ::bitmapSSD,
+    var kmeans = KMeansClassifier(k, ::bitmapSSD,
         files.allProjectImages(projectName, scaleWidth, scaleHeight), ::bitmapMean)
 
     override fun classify(image: Bitmap) {
