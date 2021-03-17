@@ -59,7 +59,7 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
         val best = highestPoint(x2y)
         overlayer.updateHeights(x2y, height, best.first)
         Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
-        notifyListeners("$best")
+        notifyListeners("${best.first} ${best.second}")
     }
 
     private fun findNotFloor(scaled: Bitmap, x: Int): Int {

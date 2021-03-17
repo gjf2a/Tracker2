@@ -27,6 +27,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ExecutorService
 
 const val START: String = "start"
@@ -65,10 +66,27 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     var talker: ClassifierListener = DummyTarget()
     lateinit var reader: TextReader
     var incoming = MessageHolder()
+    private val messageQueue = ArrayBlockingQueue<String>(100)
+
+    private val messageThread = object : Thread() {
+        override fun run() {
+            super.run()
+            while (true) {
+                val message = messageQueue.take()
+                runOnUiThread { log.append(message) }
+            }
+        }
+    }
+
+    private fun show(message: String) {
+        messageQueue.put(message)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        messageThread.start()
 
         cameraSetup(viewFinder)
 
@@ -79,8 +97,8 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
             startActivity(Intent(this@MainActivity, ManagerActivity::class.java))
         }
 
-        log.append("Log\n")
-        log.append("CPUS: ${Runtime.getRuntime().availableProcessors()}\n")
+        show("Log\n")
+        show("CPUS: ${Runtime.getRuntime().availableProcessors()}\n")
 
         start_robot.setOnClickListener { safeSend(START) }
         stop_robot.setOnClickListener { safeSend(STOP) }
@@ -97,42 +115,46 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     }
 
     private fun makeConnection() {
-        log.append("Attempting to connect...\n")
+        show("Attempting to connect...\n")
         val arduino = ArduinoTalker(this@MainActivity.getSystemService(Context.USB_SERVICE) as UsbManager)
         if (arduino.connected()) {
             reader = TextReader(arduino)
             talker = arduino
-            log.append("Connected\n")
+            show("Connected\n")
             reader.addListener(this)
             reader.start()
         } else {
-            log.append("Not connected\n")
+            show("Not connected\n")
         }
     }
 
     private fun safeSend(msg: String) {
         try {
             talker.receiveClassification(msg)
-            log.append(">$msg\n")
+            show(">$msg\n")
         } catch (e: Exception) {
             Log.i("MainActivity", "Exception when sending '$msg': $e")
-            log.append("Exception when sending '$msg': $e\n")
+            show("Exception when sending '$msg': $e\n")
         }
     }
 
     override fun receive(text: String) {
         this@MainActivity.runOnUiThread {
-            log.append(text)
-            incoming.receive(text)
-            scanForCommands()
-            scroller.post { scroller.fullScroll(View.FOCUS_DOWN) }
+            try {
+                show(text)
+                incoming.receive(text)
+                scanForCommands()
+                scroller.post { scroller.fullScroll(View.FOCUS_DOWN) }
+            } catch (e: Exception) {
+                show("Exception ${e.message} when receiving $text\n")
+            }
         }
     }
 
     private fun addClassifier(classifier: BitmapClassifier) {
         val id = analyzer.addClassifier(classifier)
         analyzer.resetFPSCalculation()
-        log.append(classifier.assess())
+        show(classifier.assess())
         talker.receiveClassification("$id")
     }
 
@@ -142,18 +164,18 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
                 Log.i("MainActivity", "Processing '$message'")
                 val interpreted = interpret(message, outputDir, arrayListOf(this, talker))
                 if (interpreted.cmdType == CommandType.COMMENT) {
-                    log.append(interpreted.msg)
+                    show(interpreted.msg)
                 } else if (interpreted.cmdType == CommandType.CREATE_CLASSIFIER) {
                     addClassifier(interpreted.classifier)
                     classifier_overlay.replaceOverlayers(interpreted.classifier.overlayers())
                 } else if (interpreted.cmdType == CommandType.PAUSE_CLASSIFIER) {
-                    log.append("FPS ${analyzer.currentFPS()}")
+                    show("FPS ${analyzer.currentFPS()}")
                     analyzer.pauseClassifier()
                     classifier_overlay.clearOverlayers()
                 } else if (interpreted.cmdType == CommandType.RESUME_CLASSIFIER) {
                     val id = interpreted.resumeIndex
                     if (id >= analyzer.numClassifiers() || id < 0) {
-                        log.append("Id $id not valid")
+                        show("Id $id not valid")
                     } else {
                         analyzer.resumeClassifier(id)
                         classifier_overlay.replaceOverlayers(analyzer.getCurrentClassifier().overlayers())
@@ -162,13 +184,13 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
 
                 if (interpreted.msg.isNotEmpty()) {
                     val msg = interpreted.msg.trim() + '\n'
-                    log.append(msg)
+                    show(msg)
                 }
             }
         } catch (e: Exception) {
             Log.i("MainActivity", "Exception when scanning for commands: $e")
             e.printStackTrace()
-            log.append("Exception when scanning for commands:: $e\n")
+            show("Exception when scanning for commands:: $e\n")
         }
     }
 
@@ -294,7 +316,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     }
 
     override fun message(msg: String) {
-        log.append(msg.trim() + '\n')
+        show(msg.trim() + '\n')
     }
 
     override fun fps(fps: Double) {
@@ -326,6 +348,7 @@ class BitmapAnalyzer(val converter: YuvBitmapConverter, val complaintsTo: Messag
     }
 
     fun addClassifier(b: BitmapClassifier): Int {
+        resetFPSCalculation()
         classifiers.add(b)
         currentClassifier = classifiers.size - 1
         return currentClassifier
