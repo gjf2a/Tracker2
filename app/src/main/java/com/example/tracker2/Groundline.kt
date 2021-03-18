@@ -73,7 +73,7 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
             }
             y -= 1
         }
-        return y
+        return y + notFloorStreak
     }
 
     override fun assess(): String {
