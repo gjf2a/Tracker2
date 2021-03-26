@@ -1,24 +1,142 @@
 package com.example.tracker2
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_manager.*
 import java.io.File
 
-class ManagerActivity : FileAccessActivity() {
+class PhotoManager(
+    val currentImage: ImageView,
+    val goLeft: Button,
+    val goRight: Button,
+    val photoDir: TextView,
+    val viewUnclassified: CheckBox,
+    val pickView: Button,
+    val selectedProject: Spinner,
+    val selectedLabel: Spinner,
+    val photoFile: TextView,
+    val outputDir: File,
+    val additionalUpdater: () -> Unit
+) {
+
     var files: FileLoop = FileLoop()
-    lateinit var manager: FileManager
+    val manager: FileManager = FileManager(outputDir)
+
+    init {
+        files.refresh(outputDir)
+        if (manager.allProjects().isEmpty()) {
+            manager.addProject(manager.makeProjectName())
+        }
+    }
+
+    fun setup(activity: AppCompatActivity, baseContext: Context) {
+        selectedProject.adapter =
+            ArrayAdapter(activity, android.R.layout.simple_spinner_item, manager.allProjects())
+        selectedProject.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+                // Intentionally left blank
+            }
+
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                selectedLabel.adapter = ArrayAdapter(
+                    baseContext,
+                    android.R.layout.simple_spinner_item,
+                    manager.allLabelsIn(p0!!.getItemAtPosition(p2).toString())
+                )
+            }
+        }
+
+        viewUnclassified.isChecked = true
+        viewUnclassified.setOnCheckedChangeListener { _, b -> refreshFiles(b) }
+
+        goLeft.setOnClickListener { files.prev(); showCurrentFile() }
+        goRight.setOnClickListener { files.next(); showCurrentFile() }
+
+        pickView.setOnClickListener { files.refresh(selectedDir()); showCurrentFile() }
+
+    }
+
+    private fun refreshFiles(viewingUnclassified: Boolean) {
+        files.refresh(viewingDir(viewingUnclassified))
+        showCurrentFile()
+    }
+
+    private fun viewingDir(viewingUnclassified: Boolean): File {
+        return if (viewingUnclassified) {outputDir} else {selectedDir()}
+    }
+
+    private fun selectedDir(): File {
+        return manager.labelDir(projectName(), labelName())
+    }
+
+    private fun projectName(): String {
+        return safelyString(selectedProject.selectedItem)
+    }
+
+    private fun labelName(): String {
+        return safelyString(selectedLabel.selectedItem)
+    }
+
+    private fun safelyString(value: Any?): String {
+        if (value == null) {
+            return "[None]"
+        } else {
+            return value.toString();
+        }
+    }
+
+    private fun showCurrentFile() {
+        photoDir.text = "${viewingDir(viewUnclassified.isChecked).toString()}${File.separatorChar}${files.currentName()}"
+        if (files.currentImage() == null) {
+            currentImage.setImageResource(android.R.color.darker_gray)
+            photoFile.text = "None"
+        } else {
+            val width = files.currentImage()!!.width
+            val height = files.currentImage()!!.height
+            val index = if (files.i == 0) {files.size()} else {files.i}
+            val category = if (viewUnclassified.isChecked) {"Unclassified"} else {"${projectName()}:${labelName()}"}
+            photoFile.text = "$category ($index/${files.size()}) ${width}x${height}"
+            currentImage.setImageBitmap(files.currentImage())
+            additionalUpdater()
+        }
+    }
+}
+
+class ManagerActivity : FileAccessActivity() {
+    val files: FileLoop = FileLoop()
+    val photos = PhotoManager(
+        current_image, left_picture_button, right_picture_button,
+        photo_directory, view_unclassified, pick_view, selected_project, selected_label,
+        photo_filename, outputDir
+    ) {
+        if (floor_sample.isChecked) {
+            rectangle_overlay.addOverlayer(
+                RectangleOverlayer(
+                    arrayListOf(
+                        ::getFloorRect,
+                        ::getUpperLeftRect,
+                        ::getUpperRightRect
+                    )
+                )
+            )
+            Log.i("ManagerActivity", "Adding rectangle overlay")
+        } else {
+            rectangle_overlay.clearOverlayers()
+            Log.i("ManagerActivity", "Removing rectangle overlay")
+        }
+    }
+    val manager = FileManager(outputDir)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_manager)
 
         files.refresh(outputDir)
-        manager = FileManager(outputDir)
         if (manager.allProjects().isEmpty()) {
             manager.addProject(manager.makeProjectName())
         }
