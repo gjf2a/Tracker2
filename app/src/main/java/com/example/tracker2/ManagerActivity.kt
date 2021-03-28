@@ -58,10 +58,9 @@ class PhotoManager(
         goRight.setOnClickListener { files.next(); showCurrentFile() }
 
         pickView.setOnClickListener { files.refresh(selectedDir()); showCurrentFile() }
-
     }
 
-    private fun refreshFiles(viewingUnclassified: Boolean) {
+    fun refreshFiles(viewingUnclassified: Boolean) {
         files.refresh(viewingDir(viewingUnclassified))
         showCurrentFile()
     }
@@ -74,11 +73,11 @@ class PhotoManager(
         return manager.labelDir(projectName(), labelName())
     }
 
-    private fun projectName(): String {
+    fun projectName(): String {
         return safelyString(selectedProject.selectedItem)
     }
 
-    private fun labelName(): String {
+    fun labelName(): String {
         return safelyString(selectedLabel.selectedItem)
     }
 
@@ -90,7 +89,7 @@ class PhotoManager(
         }
     }
 
-    private fun showCurrentFile() {
+    fun showCurrentFile() {
         photoDir.text = "${viewingDir(viewUnclassified.isChecked).toString()}${File.separatorChar}${files.currentName()}"
         if (files.currentImage() == null) {
             currentImage.setImageResource(android.R.color.darker_gray)
@@ -108,51 +107,36 @@ class PhotoManager(
 }
 
 class ManagerActivity : FileAccessActivity() {
-    val files: FileLoop = FileLoop()
-    val photos = PhotoManager(
-        current_image, left_picture_button, right_picture_button,
-        photo_directory, view_unclassified, pick_view, selected_project, selected_label,
-        photo_filename, outputDir
-    ) {
-        if (floor_sample.isChecked) {
-            rectangle_overlay.addOverlayer(
-                RectangleOverlayer(
-                    arrayListOf(
-                        ::getFloorRect,
-                        ::getUpperLeftRect,
-                        ::getUpperRightRect
-                    )
-                )
-            )
-            Log.i("ManagerActivity", "Adding rectangle overlay")
-        } else {
-            rectangle_overlay.clearOverlayers()
-            Log.i("ManagerActivity", "Removing rectangle overlay")
-        }
-    }
-    val manager = FileManager(outputDir)
+    lateinit var photos: PhotoManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_manager)
 
-        files.refresh(outputDir)
-        if (manager.allProjects().isEmpty()) {
-            manager.addProject(manager.makeProjectName())
-        }
-
-        showCurrentFile()
-
-        selected_project.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, manager.allProjects())
-        selected_project.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(p0: AdapterView<*>?) {
-                // Intentionally left blank
+        photos = PhotoManager(
+            current_image, left_picture_button, right_picture_button,
+            photo_directory, view_unclassified, pick_view, selected_project, selected_label,
+            photo_filename, outputDir
+        ) {
+            if (floor_sample.isChecked) {
+                rectangle_overlay.addOverlayer(
+                    RectangleOverlayer(
+                        arrayListOf(
+                            ::getFloorRect,
+                            ::getUpperLeftRect,
+                            ::getUpperRightRect
+                        )
+                    )
+                )
+                Log.i("ManagerActivity", "Adding rectangle overlay")
+            } else {
+                rectangle_overlay.clearOverlayers()
+                Log.i("ManagerActivity", "Removing rectangle overlay")
             }
-
-            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                selected_label.adapter = ArrayAdapter(baseContext, android.R.layout.simple_spinner_item, manager.allLabelsIn(p0!!.getItemAtPosition(p2).toString()))
-            }
+            runOnUiThread { rectangle_overlay.invalidate() }
         }
+        photos.setup(this, baseContext)
+        photos.showCurrentFile()
 
         go_to_image_button.setOnClickListener {
             startActivity(Intent(this@ManagerActivity, MainActivity::class.java))
@@ -167,75 +151,17 @@ class ManagerActivity : FileAccessActivity() {
         }
 
         view_unclassified.isChecked = true
-        view_unclassified.setOnCheckedChangeListener { _, b -> refreshFiles(b) }
-
-        left_picture_button.setOnClickListener { files.prev(); showCurrentFile() }
-        right_picture_button.setOnClickListener { files.next(); showCurrentFile() }
-
-        pick_view.setOnClickListener { files.refresh(selectedDir()); showCurrentFile() }
+        view_unclassified.setOnCheckedChangeListener { _, b -> photos.refreshFiles(b) }
 
         move_picture_button.setOnClickListener {
-            if (files.currentFile() != null) {
-                manager.moveFileTo(files.currentFile()!!, projectName(), labelName())
-                refreshFiles(view_unclassified.isChecked)
+            if (photos.files.currentFile() != null) {
+                photos.manager.moveFileTo(photos.files.currentFile()!!, photos.projectName(), photos.labelName())
+                photos.refreshFiles(view_unclassified.isChecked)
             }
         }
 
-        floor_sample.setOnCheckedChangeListener { _, b -> showCurrentFile() }
+        floor_sample.setOnCheckedChangeListener { _, b -> photos.showCurrentFile() }
 
-        delete_picture_button.setOnClickListener { files.currentFile()?.delete(); showCurrentFile() }
-    }
-
-    private fun viewingDir(viewingUnclassified: Boolean): File {
-        return if (viewingUnclassified) {outputDir} else {selectedDir()}
-    }
-
-    private fun refreshFiles(viewingUnclassified: Boolean) {
-        files.refresh(viewingDir(viewingUnclassified))
-        showCurrentFile()
-    }
-
-    private fun safelyString(value: Any?): String {
-        if (value == null) {
-            return "[None]"
-        } else {
-            return value.toString();
-        }
-    }
-
-    private fun projectName(): String {
-        return safelyString(selected_project.selectedItem)
-    }
-
-    private fun labelName(): String {
-        return safelyString(selected_label.selectedItem)
-    }
-
-    private fun selectedDir(): File {
-        return manager.labelDir(projectName(), labelName())
-    }
-
-    private fun showCurrentFile() {
-        Log.i("ManagerActivity", "showCurrentFile()")
-        photo_directory.text = "${viewingDir(view_unclassified.isChecked).toString()}${File.separatorChar}${files.currentName()}"
-        if (files.currentImage() == null) {
-            current_image.setImageResource(android.R.color.darker_gray)
-            photo_filename.text = "None"
-        } else {
-            val width = files.currentImage()!!.width
-            val height = files.currentImage()!!.height
-            val index = if (files.i == 0) {files.size()} else {files.i}
-            val category = if (view_unclassified.isChecked) {"Unclassified"} else {"${projectName()}:${labelName()}"}
-            photo_filename.text = "$category ($index/${files.size()}) ${width}x${height}"
-            current_image.setImageBitmap(files.currentImage())
-            if (floor_sample.isChecked) {
-                rectangle_overlay.addOverlayer(RectangleOverlayer(arrayListOf(::getFloorRect, ::getUpperLeftRect, ::getUpperRightRect)))
-                Log.i("ManagerActivity", "Adding rectangle overlay")
-            } else {
-                rectangle_overlay.clearOverlayers()
-                Log.i("ManagerActivity", "Removing rectangle overlay")
-            }
-            runOnUiThread { rectangle_overlay.invalidate() }
-        }
+        delete_picture_button.setOnClickListener { photos.files.currentFile()?.delete(); photos.showCurrentFile() }
     }
 }
