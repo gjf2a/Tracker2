@@ -21,6 +21,7 @@ class PhotoManager(
     val selectedLabel: Spinner,
     val photoFile: TextView,
     val outputDir: File,
+    val uiRunner: (() -> Unit) -> Unit,
     val additionalUpdater: () -> Unit
 ) {
 
@@ -90,18 +91,29 @@ class PhotoManager(
     }
 
     fun showCurrentFile() {
-        photoDir.text = "${viewingDir(viewUnclassified.isChecked).toString()}${File.separatorChar}${files.currentName()}"
-        if (files.currentImage() == null) {
-            currentImage.setImageResource(android.R.color.darker_gray)
-            photoFile.text = "None"
-        } else {
-            val width = files.currentImage()!!.width
-            val height = files.currentImage()!!.height
-            val index = if (files.i == 0) {files.size()} else {files.i}
-            val category = if (viewUnclassified.isChecked) {"Unclassified"} else {"${projectName()}:${labelName()}"}
-            photoFile.text = "$category ($index/${files.size()}) ${width}x${height}"
-            currentImage.setImageBitmap(files.currentImage())
-            additionalUpdater()
+        uiRunner {
+            photoDir.text =
+                "${viewingDir(viewUnclassified.isChecked).toString()}${File.separatorChar}${files.currentName()}"
+            if (files.currentImage() == null) {
+                currentImage.setImageResource(android.R.color.darker_gray)
+                photoFile.text = "None"
+            } else {
+                val width = files.currentImage()!!.width
+                val height = files.currentImage()!!.height
+                val index = if (files.i == 0) {
+                    files.size()
+                } else {
+                    files.i
+                }
+                val category = if (viewUnclassified.isChecked) {
+                    "Unclassified"
+                } else {
+                    "${projectName()}:${labelName()}"
+                }
+                photoFile.text = "$category ($index/${files.size()}) ${width}x${height}"
+                currentImage.setImageBitmap(files.currentImage())
+                additionalUpdater()
+            }
         }
     }
 }
@@ -117,7 +129,7 @@ class ManagerActivity : FileAccessActivity() {
             current_image, left_picture_button, right_picture_button,
             photo_directory, view_unclassified, pick_view, selected_project, selected_label,
             photo_filename, outputDir
-        ) {
+        , {code -> runOnUiThread { code() }}) {
             if (floor_sample.isChecked) {
                 rectangle_overlay.addOverlayer(
                     RectangleOverlayer(
