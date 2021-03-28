@@ -128,8 +128,7 @@ class ManagerActivity : FileAccessActivity() {
         photos = PhotoManager(
             current_image, left_picture_button, right_picture_button,
             photo_directory, view_unclassified, pick_view, selected_project, selected_label,
-            photo_filename, outputDir
-        , {code -> runOnUiThread { code() }}) {
+            photo_filename, outputDir, {runOnUiThread { it() }}) {
             if (floor_sample.isChecked) {
                 rectangle_overlay.addOverlayer(
                     RectangleOverlayer(
