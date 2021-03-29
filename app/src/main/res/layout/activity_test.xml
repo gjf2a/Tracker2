@@ -29,7 +29,7 @@
 
     <!--android:text="Commands:\ncv knn k project width height\ncv knn_brief k project width height numPairs\ncv pause\ncv resume id\n"-->
     <TextView
-        android:text="Commands:\ncv knn k project width height\ncv kmeans k project width height\ncv groundline maxColors minNotFloor project label width height [photoNums]\ncv pause\ncv resume id\n"
+        android:text="Commands:\ncv knn k project width height\ncv kmeans k project width height\ncv groundline maxColors minNotFloor project label width height [maxJump=value] [photoNums]\ncv pause\ncv resume id\n"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         app:layout_constraintLeft_toRightOf="@id/test_to_robot"

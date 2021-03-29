@@ -89,7 +89,7 @@ fun interpretKmeans(command: List<String>, manager: FileManager, listeners: List
 }
 
 fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroundline
-            (makeGroundline: (ArrayList<Bitmap>, Int, Int)->G,
+            (makeGroundline: (ArrayList<Bitmap>, Int, Int, Int)->G,
              command: List<String>,
              manager: FileManager,
              listeners: List<ClassifierListener>): InterpreterResult {
@@ -102,7 +102,14 @@ fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroun
             val width = Integer.parseInt(command[6])
             val height = Integer.parseInt(command[7])
             val choices = ArrayList<Bitmap>()
-            for (i in getPhotoNumbers(command, project, label, manager)) {
+            var start = 8
+            val maxJump = if (command.size >= 8 && command[8].startsWith("maxJump=")) {
+                start = 9
+                Integer.parseInt(command[8].split("=")[1])
+            } else {
+                height + 1
+            }
+            for (i in getPhotoNumbers(command, start, project, label, manager)) {
                 choices.add(
                     manager.loadImage(
                         project,
@@ -113,7 +120,7 @@ fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroun
                     )
                 )
             }
-            val groundline = makeGroundline(choices, maxColors, minNotFloor)
+            val groundline = makeGroundline(choices, maxColors, minNotFloor, maxJump)
             groundline.addListeners(listeners)
             return createClassifier(groundline,
                 "Activating Groundline: $maxColors $project $label (${width}x${height})")
@@ -125,10 +132,10 @@ fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroun
     }
 }
 
-fun getPhotoNumbers(command: List<String>, project: String, label: String, manager: FileManager): ArrayList<Int> {
+fun getPhotoNumbers(command: List<String>, start: Int, project: String, label: String, manager: FileManager): ArrayList<Int> {
     val result = ArrayList<Int>()
-    if (command.size > 8) {
-        for (i in 8 until command.size) {
+    if (command.size > start) {
+        for (i in start until command.size) {
             result.add(Integer.parseInt(command[i]))
         }
     } else {
