@@ -2,6 +2,9 @@ package com.example.tracker2
 
 import android.graphics.*
 import android.util.Log
+import java.lang.Math.min
+import kotlin.math.absoluteValue
+import kotlin.math.sign
 
 fun getFloorRect(width: Int, height: Int): Rect {
     val rectWidth = width / 4
@@ -49,17 +52,37 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
     val overlayer = GroundlineOverlayer()
     val width = images[0].width
     val height = images[0].height
+    val maxJumpSize = height + 1
 
     override fun classify(image: Bitmap) {
+        val x2y = filterNoise(findGroundline(image))
+        val best = highestPoint(x2y)
+        overlayer.updateHeights(x2y, height, best.first)
+        Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
+        notifyListeners("${best.first} ${best.second}")
+    }
+
+    private fun filterNoise(groundline: ArrayList<Int>): ArrayList<Int> {
+        val filtered = ArrayList<Int>()
+        filtered.add(groundline[0])
+        for (i in 1..groundline.size) {
+            filtered.add(if (getJumpFor(groundline, i) > maxJumpSize) {
+                (groundline[i - 1] + groundline[i + 1]) / 2
+            } else {
+                groundline[i]
+            })
+        }
+        filtered.add(groundline[groundline.size - 1])
+        return filtered
+    }
+
+    fun findGroundline(image: Bitmap): ArrayList<Int> {
         val x2y = ArrayList<Int>()
         val scaled = Bitmap.createScaledBitmap(image, width, height, false)
         for (x in 0 until width) {
             x2y.add(findNotFloor(scaled, x))
         }
-        val best = highestPoint(x2y)
-        overlayer.updateHeights(x2y, height, best.first)
-        Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
-        notifyListeners("${best.first} ${best.second}")
+        return x2y
     }
 
     private fun findNotFloor(scaled: Bitmap, x: Int): Int {
@@ -82,6 +105,16 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
 
     override fun overlayers(): ArrayList<Overlayer> {
         return arrayListOf(overlayer)
+    }
+}
+
+fun getJumpFor(groundline: ArrayList<Int>, i: Int): Int {
+    val leftJump = groundline[i] - groundline[i-1]
+    val rightJump = groundline[i] - groundline[i+1]
+    return if (leftJump.sign == rightJump.sign) {
+        kotlin.math.min(leftJump.absoluteValue, rightJump.absoluteValue)
+    } else {
+        0
     }
 }
 

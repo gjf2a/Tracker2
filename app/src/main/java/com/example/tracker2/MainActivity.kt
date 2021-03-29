@@ -384,8 +384,9 @@ class BitmapAnalyzer(val converter: YuvBitmapConverter, val complaintsTo: Messag
             //Log.i("BitmapAnalyzer", "Bitmap: (${bitmap.width}, ${bitmap.height})")
             classifiers.get(currentClassifier).classify(bitmap)
             frameCount += 1
-            for (fps in fpsListeners) {
-                fps.fps(currentFPS())
+            val fps = currentFPS()
+            for (listener in fpsListeners) {
+                listener.fps(fps)
             }
         } catch (e: java.lang.Exception) {
             Log.i("BitmapAnalyzer", "Exception when classifying: $e")
