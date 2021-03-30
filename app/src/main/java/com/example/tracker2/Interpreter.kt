@@ -14,12 +14,22 @@ fun suffixStartingWith(suffixStart: String, msg: String): String {
     return ""
 }
 
+fun suffixStartingAnyOf(candidates: List<String>, msg: String): String {
+    for (candidate in candidates) {
+        val suffix = suffixStartingWith(candidate, msg)
+        if (suffix.isNotEmpty()) {
+            return suffix
+        }
+    }
+    return ""
+}
+
 interface ClassifierListener {
     fun receiveClassification(msg: String)
 }
 
 enum class CommandType {
-    CREATE_CLASSIFIER, PAUSE_CLASSIFIER, COMMENT, RESUME_CLASSIFIER, ERROR
+    CREATE_CLASSIFIER, PAUSE_CLASSIFIER, COMMENT, RESUME_CLASSIFIER, SPEAK, ERROR
 }
 
 data class InterpreterResult(val cmdType: CommandType, val classifier: BitmapClassifier, val resumeIndex: Int, val msg: String)
@@ -45,28 +55,38 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
     try {
         val manager = FileManager(outputDir)
         val comment = suffixStartingWith("#", msg.trim())
-        if (comment.isNotEmpty()) {
-            return simpleResult(CommandType.COMMENT, comment)
+        return if (comment.isNotEmpty()) {
+            simpleResult(CommandType.COMMENT, comment)
         } else {
-            val command = suffixStartingWith("cv ", msg.trim()).split(" ")
-            if (command.isNotEmpty() && command[0] == "cv") {
-                if (command.size == 6 && command[1] == "knn") {
-                    return interpretKnn(command, manager, listeners)
-                } else if (command.size == 7 && command[1] == "knn_brief") {
-                    return interpretBrief(command, manager, listeners)
-                } else if (command.size == 6 && command[1] == "kmeans") {
-                    return interpretKmeans(command, manager, listeners)
-                } else if (command.size >= 8 && command[1] == "groundline") {
-                    return interpretGroundline(::GroundlineKmeans, command, manager, listeners)
-                } else if (command.size == 2 && command[1] == "pause") {
-                    return simpleResult(CommandType.PAUSE_CLASSIFIER, "Classifier paused")
-                } else if (command.size == 3 && command[1] == "resume") {
-                    return resumeResult(Integer.parseInt(command[2]))
-                } else {
-                    return simpleResult(CommandType.ERROR,"Unrecognized cv cmd: '$command'")
+            val command = suffixStartingAnyOf(listOf("cv ", "say "), msg.trim()).split(" ")
+            if (command.isNotEmpty()) {
+                when {
+                    command[0] == "cv" -> {
+                        if (command.size == 6 && command[1] == "knn") {
+                            interpretKnn(command, manager, listeners)
+                        } else if (command.size == 7 && command[1] == "knn_brief") {
+                            interpretBrief(command, manager, listeners)
+                        } else if (command.size == 6 && command[1] == "kmeans") {
+                            interpretKmeans(command, manager, listeners)
+                        } else if (command.size >= 8 && command[1] == "groundline") {
+                            interpretGroundline(::GroundlineKmeans, command, manager, listeners)
+                        } else if (command.size == 2 && command[1] == "pause") {
+                            simpleResult(CommandType.PAUSE_CLASSIFIER, "Classifier paused")
+                        } else if (command.size == 3 && command[1] == "resume") {
+                            resumeResult(Integer.parseInt(command[2]))
+                        } else {
+                            simpleResult(CommandType.ERROR, "Unrecognized cv cmd: '$command'")
+                        }
+                    }
+                    command[0] == "say" -> {
+                        simpleResult(CommandType.SPEAK, command.subList(1, command.size).joinToString(separator = " "))
+                    }
+                    else -> {
+                        simpleResult(CommandType.ERROR, "Unrecognized cmd type: '${command[0]}'")
+                    }
                 }
             } else {
-                return simpleResult(CommandType.ERROR,"Unrecognized cmd: '$command'")
+                simpleResult(CommandType.ERROR,"Unrecognized cmd: '$command'")
             }
         }
     } catch (nfe: NumberFormatException) {

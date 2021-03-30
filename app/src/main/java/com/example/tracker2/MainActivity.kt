@@ -14,6 +14,7 @@ import android.hardware.usb.UsbManager
 import android.media.Image
 import android.net.Uri
 import android.renderscript.*
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -58,7 +59,7 @@ interface FPSReceiver {
     fun fps(fps: Double)
 }
 
-class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSReceiver, ClassifierListener {
+class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSReceiver, ClassifierListener, TextToSpeech.OnInitListener {
     var imageCapture: ImageCapture? = null
     lateinit var cameraExecutor: ExecutorService
     lateinit var view: PreviewView
@@ -67,6 +68,21 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     lateinit var reader: TextReader
     var incoming = MessageHolder()
     private val messageQueue = ArrayBlockingQueue<String>(100)
+    private var tts: TextToSpeech? = null
+
+    override fun onInit(status: Int) {
+        // From: https://www.tutorialkart.com/kotlin-android/android-text-to-speech-kotlin-example/
+        if (status == TextToSpeech.SUCCESS) {
+            val result = tts!!.setLanguage(Locale.US)
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                show("English is not supported in text-to-speech\n")
+            } else {
+                show("Text-to-speech enabled\n")
+            }
+        } else {
+            show("Failed to initialize text-to-speech\n")
+        }
+    }
 
     private val messageThread = object : Thread() {
         override fun run() {
@@ -89,6 +105,8 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
         messageThread.start()
 
         cameraSetup(viewFinder)
+
+        tts = TextToSpeech(this, this)
 
         // Set up the listener for take photo button
         camera_capture_button.setOnClickListener { takePhoto() }
@@ -180,6 +198,9 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
                         analyzer.resumeClassifier(id)
                         classifier_overlay.replaceOverlayers(analyzer.getCurrentClassifier().overlayers())
                     }
+                } else if (interpreted.cmdType == CommandType.SPEAK) {
+                    show("Saying: '${interpreted.msg}'")
+                    tts!!.speak(interpreted.msg, TextToSpeech.QUEUE_FLUSH, null, "")
                 }
 
                 if (interpreted.msg.isNotEmpty()) {
@@ -289,8 +310,12 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         cameraExecutor.shutdown()
+        if (tts != null) {
+            tts!!.stop()
+            tts!!.shutdown()
+        }
+        super.onDestroy()
     }
 
     companion object {
