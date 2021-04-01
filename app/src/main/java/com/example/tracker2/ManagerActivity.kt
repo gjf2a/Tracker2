@@ -126,26 +126,27 @@ class ManagerActivity : FileAccessActivity() {
         photos = PhotoManager(
             current_image, left_picture_button, right_picture_button,
             pick_view, photo_directory, view_unclassified, selected_project, selected_label,
-            photo_filename, outputDir, {
-                runOnUiThread {
-                    if (floor_sample.isChecked) {
-                        rectangle_overlay.addOverlayer(
-                            RectangleOverlayer(
-                                arrayListOf(
-                                    ::getFloorRect,
-                                    ::getUpperLeftRect,
-                                    ::getUpperRightRect
-                                )
+            photo_filename, outputDir
+        ) {
+            runOnUiThread {
+                it()
+                if (floor_sample.isChecked) {
+                    rectangle_overlay.addOverlayer(
+                        RectangleOverlayer(
+                            arrayListOf(
+                                ::getFloorRect,
+                                ::getUpperLeftRect,
+                                ::getUpperRightRect
                             )
                         )
-                        Log.i("ManagerActivity", "Adding rectangle overlay")
-                    } else {
-                        rectangle_overlay.clearOverlayers()
-                        Log.i("ManagerActivity", "Removing rectangle overlay")
-                    }
-                    it()
-                    rectangle_overlay.invalidate()
-                }})
+                    )
+                    Log.i("ManagerActivity", "Adding rectangle overlay")
+                } else {
+                    rectangle_overlay.clearOverlayers()
+                    Log.i("ManagerActivity", "Removing rectangle overlay")
+                }
+                rectangle_overlay.invalidate()
+            }}
         photos.setup(this, baseContext)
         photos.showCurrentFile()
 
