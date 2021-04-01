@@ -6,4 +6,174 @@
     android:layout_height="match_parent"
     tools:context=".CalibrationActivity">
 
+    <ImageView
+        android:id="@+id/calibration_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <com.example.tracker2.Overlay
+        android:id="@+id/calibration_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <Button
+        android:id="@+id/left_calibration"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".2"
+        android:layout_marginBottom="50dp"
+        android:text="Back"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/photo_directory_calibration"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
+    <TextView
+        android:text="Test"
+        android:id="@+id/photo_directory_calibration"
+        android:layout_width="200dp"
+        app:layout_constraintLeft_toRightOf="@id/left_calibration"
+        app:layout_constraintRight_toLeftOf="@id/right_calibration"
+        android:layout_height="100dp"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
+    <Button
+        android:id="@+id/right_calibration"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".2"
+        android:text="Forward"
+        app:layout_constraintLeft_toRightOf="@id/photo_directory_calibration"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
+    <CheckBox
+        android:id="@+id/view_calibration_unclassified"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".2"
+        app:layout_constraintHeight_percent=".1"
+        android:text="View Unclassified"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/left_calibration"
+        />
+
+    <Button
+        android:id="@+id/pick_calibration_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".15"
+        android:text="Select View"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/selected_calibration_label"
+        android:elevation="2dp"
+        />
+
+    <Button
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:id="@+id/calibration_to_manager"
+        android:text="To Manager"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".15"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pick_calibration_view"
+        />
+
+
+
+    <Spinner
+        android:id="@+id/selected_calibration_project"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".2"
+        app:layout_constraintHeight_percent=".2"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/view_calibration_unclassified"
+        />
+
+    <Spinner
+        android:id="@+id/selected_calibration_label"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".2"
+        app:layout_constraintHeight_percent=".2"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/selected_calibration_project"
+        />
+
+    <TextView
+        android:text="Test"
+        android:id="@+id/photo_calibration_filename"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/photo_directory_calibration"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <Spinner
+        android:id="@+id/line_choice"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:entries="@array/line_choices"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/photo_calibration_filename"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <Button
+        android:text="Up"
+        android:id="@+id/line_up"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/line_choice"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <Button
+        android:text="Down"
+        android:id="@+id/line_down"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/line_up"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <Button
+        android:text="Widen"
+        android:id="@+id/line_wide"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/line_down"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <Button
+        android:text="Shorten"
+        android:id="@+id/line_short"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/line_wide"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

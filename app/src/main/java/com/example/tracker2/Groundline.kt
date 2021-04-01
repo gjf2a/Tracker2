@@ -2,7 +2,6 @@ package com.example.tracker2
 
 import android.graphics.*
 import android.util.Log
-import java.lang.Math.min
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 

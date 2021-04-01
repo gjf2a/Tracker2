@@ -150,6 +150,9 @@ class ManagerActivity : FileAccessActivity() {
         photos.setup(this, baseContext)
         photos.showCurrentFile()
 
+        view_unclassified.isChecked = true
+        view_unclassified.setOnCheckedChangeListener { _, b -> photos.refreshFiles(b) }
+
         go_to_image_button.setOnClickListener {
             startActivity(Intent(this@ManagerActivity, MainActivity::class.java))
         }
@@ -162,8 +165,9 @@ class ManagerActivity : FileAccessActivity() {
             startActivity(Intent(this@ManagerActivity, TestActivity::class.java))
         }
 
-        view_unclassified.isChecked = true
-        view_unclassified.setOnCheckedChangeListener { _, b -> photos.refreshFiles(b) }
+        go_to_calibration.setOnClickListener {
+            startActivity(Intent(this@ManagerActivity, CalibrationActivity::class.java))
+        }
 
         move_picture_button.setOnClickListener {
             if (photos.files.currentFile() != null) {
