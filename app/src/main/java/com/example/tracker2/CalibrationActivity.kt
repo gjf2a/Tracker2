@@ -5,9 +5,11 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
 import kotlinx.android.synthetic.main.activity_calibration.*
 
-const val CALIBRATION_DELTA = 4
+const val CALIBRATION_DELTA = 2
 const val CALIBRATION_MAX = 100
 
 fun scale(value: Int, targetRange: Int): Float = (value * targetRange).toFloat() / CALIBRATION_MAX
@@ -61,7 +63,7 @@ class CalibrationOverlayer(val meter1: CalibrationLine, val meter2: CalibrationL
 
 class CalibrationActivity : FileAccessActivity() {
     lateinit var photos: PhotoManager
-    val lines = arrayOf(CalibrationLine(70, 50), CalibrationLine(30, 50))
+    private val lines = arrayOf(CalibrationLine(70, 50), CalibrationLine(30, 50))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,11 +83,31 @@ class CalibrationActivity : FileAccessActivity() {
             startActivity(Intent(this@CalibrationActivity, ManagerActivity::class.java))
         }
 
-        line_up.setOnClickListener { activeLine().up(); calibration_overlay.invalidate() }
-        line_down.setOnClickListener { activeLine().down(); calibration_overlay.invalidate() }
-        line_short.setOnClickListener { activeLine().shorten(); calibration_overlay.invalidate() }
-        line_wide.setOnClickListener { activeLine().widen(); calibration_overlay.invalidate() }
+        line_up.setOnClickListener { update { it.up() } }
+        line_down.setOnClickListener { update {it.down()} }
+        line_short.setOnClickListener { update {it.shorten()} }
+        line_wide.setOnClickListener { update {it.widen()} }
+
+        line_choice.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
+
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
+                refresh(position)
+            }
+        }
+
+        refresh(line_choice.selectedItemPosition)
     }
 
-    fun activeLine(): CalibrationLine = lines[line_choice.selectedItemPosition]
+    fun update(updater: (CalibrationLine) -> Unit) {
+        val pos = line_choice.selectedItemPosition
+        updater(lines[pos])
+        refresh(pos)
+    }
+
+    fun refresh(position: Int) {
+        calibration_width.text = "Width: ${lines[position].width}"
+        calibration_height.text = "Height: ${lines[position].height}"
+        calibration_overlay.invalidate()
+    }
 }
