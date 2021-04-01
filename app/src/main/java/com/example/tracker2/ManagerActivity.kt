@@ -14,15 +14,14 @@ class PhotoManager(
     val currentImage: ImageView,
     val goLeft: Button,
     val goRight: Button,
+    val pickView: Button,
     val photoDir: TextView,
     val viewUnclassified: CheckBox,
-    val pickView: Button,
     val selectedProject: Spinner,
     val selectedLabel: Spinner,
     val photoFile: TextView,
     val outputDir: File,
-    val uiRunner: (() -> Unit) -> Unit,
-    val additionalUpdater: () -> Unit
+    val uiRunner: (() -> Unit) -> Unit
 ) {
 
     var files: FileLoop = FileLoop()
@@ -112,7 +111,6 @@ class PhotoManager(
                 }
                 photoFile.text = "$category ($index/${files.size()}) ${width}x${height}"
                 currentImage.setImageBitmap(files.currentImage())
-                additionalUpdater()
             }
         }
     }
@@ -127,25 +125,27 @@ class ManagerActivity : FileAccessActivity() {
 
         photos = PhotoManager(
             current_image, left_picture_button, right_picture_button,
-            photo_directory, view_unclassified, pick_view, selected_project, selected_label,
-            photo_filename, outputDir, {runOnUiThread { it() }}) {
-            if (floor_sample.isChecked) {
-                rectangle_overlay.addOverlayer(
-                    RectangleOverlayer(
-                        arrayListOf(
-                            ::getFloorRect,
-                            ::getUpperLeftRect,
-                            ::getUpperRightRect
+            pick_view, photo_directory, view_unclassified, selected_project, selected_label,
+            photo_filename, outputDir, {
+                runOnUiThread {
+                    if (floor_sample.isChecked) {
+                        rectangle_overlay.addOverlayer(
+                            RectangleOverlayer(
+                                arrayListOf(
+                                    ::getFloorRect,
+                                    ::getUpperLeftRect,
+                                    ::getUpperRightRect
+                                )
+                            )
                         )
-                    )
-                )
-                Log.i("ManagerActivity", "Adding rectangle overlay")
-            } else {
-                rectangle_overlay.clearOverlayers()
-                Log.i("ManagerActivity", "Removing rectangle overlay")
-            }
-            runOnUiThread { rectangle_overlay.invalidate() }
-        }
+                        Log.i("ManagerActivity", "Adding rectangle overlay")
+                    } else {
+                        rectangle_overlay.clearOverlayers()
+                        Log.i("ManagerActivity", "Removing rectangle overlay")
+                    }
+                    it()
+                    rectangle_overlay.invalidate()
+                }})
         photos.setup(this, baseContext)
         photos.showCurrentFile()
 

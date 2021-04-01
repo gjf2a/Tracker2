@@ -5,7 +5,7 @@ import android.os.Bundle
 
 class CalibrationActivity : FileAccessActivity() {
     var files: FileLoop = FileLoop()
-    lateinit var manager: FileManager
+    lateinit var photos: PhotoManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
