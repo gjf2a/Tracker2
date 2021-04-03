@@ -2,10 +2,33 @@ package com.example.tracker2
 
 import java.util.*
 
-class GridMap {
-    var width = 0
-    var height = 0
-    val cells = BitSet()
+class GridMap(val cellsPerMeter: Double, val metersPerSide: Double) {
+    val cellsPerSide = (cellsPerMeter * metersPerSide).toInt()
+    private val cells = BitSet(cellsPerSide * cellsPerSide)
+
+    private fun meter2cell(meter: Double): Int = (meter * cellsPerMeter).toInt()
+
+    private fun meters2index(xMeter: Double, yMeter: Double): Int =
+        meter2cell(yMeter + metersPerSide/2) * cellsPerSide + meter2cell(xMeter + metersPerSide/2)
+
+    fun set(xMeter: Double, yMeter: Double, width: Double, height: Double, value: Boolean) {
+        var m = yMeter
+        while (m < yMeter + height) {
+            cells.set(meters2index(xMeter, m), meters2index(xMeter + width, m), value)
+            m += 1.0/cellsPerMeter
+        }
+    }
+
+    fun isFilled(xMeter: Double, yMeter: Double): Boolean = cells.get(meters2index(xMeter, yMeter))
+
+    fun print() {
+        for (y in 0 until cellsPerSide) {
+            for (x in 0 until cellsPerSide) {
+                print("${if (cells.get(y * cellsPerSide + x)) {"*"} else {"."}}")
+            }
+            println()
+        }
+    }
 }
 
 const val MAX_DISTANCE_METERS = 2.0

@@ -221,12 +221,20 @@ class UnitTests {
         val xlines = arrayOf(xs1, xs2, xs3)
         val ylines = arrayOf(ys1, ys2, ys3)
         for (g in 0..2) {
-            for (x in 0 until groundlines.size) {
+            println("line $g")
+            val map = GridMap(20.0, 5.0)
+            for (x in groundlines[g].indices) {
                 val x1 = converter.xPixel2distance(x, groundlines[g][x])
+                val x2 = converter.xPixel2distance(x + 1, groundlines[g][x])
                 val y1 = converter.yPixel2distance(groundlines[g][x])
+                val y2 = converter.yPixel2distance(groundlines[g][x] - 1)
+                if (y1 < MAX_DISTANCE_METERS) {
+                    map.set(x1, y1, x2 - x1, y2 - y1, true)
+                }
                 assert(x1 == xlines[g][x])
                 assert(y1 == ylines[g][x])
             }
+            map.print()
         }
     }
 
