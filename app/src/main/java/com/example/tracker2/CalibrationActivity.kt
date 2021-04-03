@@ -12,7 +12,8 @@ import kotlinx.android.synthetic.main.activity_calibration.*
 const val CALIBRATION_DELTA = 2
 const val CALIBRATION_MAX = 100
 
-fun scale(value: Int, targetRange: Int): Float = (value * targetRange).toFloat() / CALIBRATION_MAX
+fun scale2float(value: Int, targetRange: Int): Float = (value * targetRange).toFloat() / CALIBRATION_MAX
+fun scale2int(value: Int, targetRange: Int): Int = (value * targetRange) / CALIBRATION_MAX
 
 class CalibrationLine(var height: Int, var width: Int) {
     fun up() {
@@ -31,11 +32,14 @@ class CalibrationLine(var height: Int, var width: Int) {
         width = (width - CALIBRATION_DELTA).coerceAtLeast(CALIBRATION_DELTA)
     }
 
+    fun xLeft(): Int = (CALIBRATION_MAX - width) / 2
+    fun xRight(): Int = xLeft() + width
+
     fun draw(canvas: Canvas, paint: Paint) {
-        val scaledWidth = scale(width, canvas.width)
+        val scaledWidth = scale2float(width, canvas.width)
         val x1 = (canvas.width - scaledWidth) / 2
         val x2 = x1 + scaledWidth
-        val y = scale(height, canvas.height)
+        val y = scale2float(height, canvas.height)
         canvas.drawLine(x1, y, x2, y, paint)
     }
 }

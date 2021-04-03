@@ -203,4 +203,25 @@ class UnitTests {
         val highest2 = highestPoint(example2)
         assert(highest2 == Pair(32, 1))
     }
+
+    @Test
+    fun pixelConverterTest() {
+        val converter = PixelConverter(CalibrationLine(60, 64), CalibrationLine(52, 30), 40, 30)
+        val groundline1 = arrayListOf(17, 17, 17, 17, 17, 16, 16, 17, 16, 15, 15, 16, 15, 15, 15, 15, 15, 15, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 21, 20, 21, 21, 21, 21, 21, 21, 21, 22, 22)
+        val groundline2 = arrayListOf(26, 26, 24, 24, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 23, 26, 24, 15, 21, 16, 19, 20, 20, 21, 23, 22, 5, 11, 2, 4, 3, 1, 1, 1, 10, 17, 17)
+        val groundline3 = arrayListOf(18, 17, 17, 7, 18, 17, 17, 17, 17, 17, 18, 18, 16, 15, 15, 15, 16, 15, 15, 15, 15, 17, 17, 17, 18, 18, 18, 17, 18, 18, 18, 18, 16, 14, 14, 14, 14, 14, 17, 17)
+        for (groundline in arrayOf(groundline1, groundline2, groundline3)) {
+            for (x in 0 until groundline.size) {
+                val x1 = converter.xPixel2distance(x, groundline[x])
+                val y1 = converter.yPixel2distance(groundline[x])
+                println("($x, ${groundline[x]}): ($x1, $y1)")
+            }
+        }
+    }
+
+    @Test
+    fun solveForXTest() {
+        assert(solveForX(0, 1, 2, 1, 3) == 1.0)
+        assert(solveForX(3, 1, 1, 2, 2) == 3.0)
+    }
 }
