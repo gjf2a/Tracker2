@@ -26,26 +26,10 @@ class PixelConverter(val meter1: CalibrationLine, val meter2: CalibrationLine,
         val x = (CALIBRATION_MAX * xPixel / imgWidth) - (CALIBRATION_MAX / 2)
         val y = CALIBRATION_MAX * yPixel / imgHeight
         val widthAtY = widthAt(y)
-        println("xPixel2distance ($x, $y) ($widthAtY) yields ${x.toDouble() / widthAtY}")
         return x.toDouble() / widthAtY
-        /*
-
-        val calibStart = (CALIBRATION_MAX - widthAtY.toInt()) / 2
-        val calibEnd = calibStart + widthAtY.toInt()
-
-
-        val xStart = calib2xPixel(calibStart)
-        val xEnd = calib2xPixel(calibEnd)
-        val xMid = (xStart + xEnd) / 2
-        val offset = x - xMid
-        val range = (xEnd - xStart).toDouble()
-        println("$widthAtY $calibStart $calibEnd $xStart $xMid $xEnd $offset $range")
-        return offset.toDouble() / range
-         */
     }
 
     fun yPixel2distance(y: Int): Double {
-        println("yPixel2distance: $y $meter1Pixel $meter2Pixel")
         return when {
             y >= meter1Pixel -> {
                 val offset = imgHeight - y
@@ -64,11 +48,8 @@ class PixelConverter(val meter1: CalibrationLine, val meter2: CalibrationLine,
     }
 
     private fun widthAt(height: Int): Double {
-        println("widthAt")
-        println("${meter1.xLeft()} ${meter1.xRight()} ${meter1.height} ${meter2.xLeft()} ${meter2.xRight()} ${meter2.height}")
         val left = solveForX(height, meter1.xLeft(), meter1.height, meter2.xLeft(), meter2.height)
         val right = solveForX(height, meter1.xRight(), meter1.height, meter2.xRight(), meter2.height)
-        println("$height $left $right")
         return right - left
     }
 }
