@@ -60,9 +60,9 @@ class PixelConverter(val meter1: CalibrationLine, val meter2: CalibrationLine,
         }
     }
 
-    private fun yScale(y: Int, offsetLeft: Int, offsetRight: Int): Double {
-        val offset = offsetLeft - y
-        val range = offsetLeft - offsetRight
+    private fun yScale(y: Int, offsetBottom: Int, offsetTop: Int): Double {
+        val offset = offsetBottom - y
+        val range = offsetBottom - offsetTop
         return offset.toDouble() / range.toDouble()
     }
 
