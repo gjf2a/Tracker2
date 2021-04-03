@@ -54,20 +54,16 @@ class PixelConverter(val meter1: CalibrationLine, val meter2: CalibrationLine,
 
     fun yPixel2distance(y: Int): Double {
         return when {
-            y >= meter1Pixel -> {
-                val offset = imgHeight - y
-                val range = imgHeight - meter1Pixel
-                offset.toDouble() / range.toDouble()
-            }
-            y >= meter2Pixel -> {
-                val offset = meter1Pixel - y
-                val range = meter1Pixel - meter2Pixel
-                1.0 + offset.toDouble() / range.toDouble()
-            }
-            else -> {
-                MAX_DISTANCE_METERS
-            }
+            y >= meter1Pixel -> yScale(y, imgHeight, meter1Pixel)
+            y >= meter2Pixel -> 1.0 + yScale(y, meter1Pixel, meter2Pixel)
+            else -> MAX_DISTANCE_METERS
         }
+    }
+
+    private fun yScale(y: Int, offsetLeft: Int, offsetRight: Int): Double {
+        val offset = offsetLeft - y
+        val range = offsetLeft - offsetRight
+        return offset.toDouble() / range.toDouble()
     }
 
     private fun widthAt(height: Int): Double {
