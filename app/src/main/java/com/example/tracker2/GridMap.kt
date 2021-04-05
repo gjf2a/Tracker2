@@ -27,10 +27,12 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
     fun set(xMeter: Double, yMeter: Double, width: Double, height: Double, value: Boolean) {
         var m = yMeter
         while (m < yMeter + height) {
-            val start = meters2index(xMeter, m)
-            val end = meters2index(xMeter + width, m)
-            if (start < 0 || start >= cellsPerSide() || end < 0 || end >= cellsPerSide()) {
+            var start = meters2index(xMeter, m)
+            var end = meters2index(xMeter + width, m)
+            while (start < 0 || start >= totalCells() || end < 0 || end >= totalCells()) {
                 resize()
+                start = meters2index(xMeter, m)
+                end = meters2index(xMeter + width, m)
             }
             cells.set(start, end, value)
             m += 1.0/cellsPerMeter
@@ -40,10 +42,8 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
     private fun resize() {
         val oldCells = cells
         val oldSize = cellsPerSide()
-        println("oldSize: $oldSize")
         val oldStart = -oldSize/2
         metersPerSide *= 2
-        println("newSize: ${cellsPerSide()}")
         cells = makeCells()
         for (x in oldStart until oldStart + oldSize) {
             for (y in oldStart until oldStart + oldSize) {
