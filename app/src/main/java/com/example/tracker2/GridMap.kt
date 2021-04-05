@@ -88,7 +88,6 @@ fun solveForX(y: Int, x1: Int, y1: Int, x2: Int, y2: Int): Double =
 class PixelConverter(val meter1: CalibrationLine, val meter2: CalibrationLine,
                      val imgWidth: Int, val imgHeight: Int) {
 
-    private fun calib2xPixel(calibX: Int): Int = scale2int(calibX, imgWidth)
     private fun calib2yPixel(calibY: Int): Int = scale2int(calibY, imgHeight)
 
     private val meter1Pixel = calib2yPixel(meter1.height)
