@@ -230,7 +230,6 @@ class UnitTests {
                 assert(y1 == ylines[g][x])
             }
             val map = mapFrom(groundlines[g], 20.0, converter)
-            strcmp(map.toString(), maps[g])
             assert(map.toString() == maps[g])
         }
     }
@@ -247,23 +246,6 @@ class UnitTests {
     fun solveForXTest() {
         assert(solveForX(0, 1, 2, 1, 3) == 1.0)
         assert(solveForX(3, 1, 1, 2, 2) == 3.0)
-    }
-}
-
-fun strcmp(s1: String, s2: String) {
-    if (s1.length == s2.length) {
-        var row = 0
-        var col = 0
-        for (i in s1.indices) {
-            if (s1[i] != s2[i]) {
-                println("Differ at $i ($col, $row): ${s1[i]} vs ${s2[i]}")
-            }
-            if (s1[i] == '\n') {row += 1; col = 0}
-            else {col += 1}
-        }
-        println("done comparing")
-    } else {
-        println("Different lengths: ${s1.length} vs ${s2.length}")
     }
 }
 
