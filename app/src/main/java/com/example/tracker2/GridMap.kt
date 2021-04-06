@@ -24,10 +24,9 @@ data class PolarCoord(val r: Double, val theta: Double) {
 }
 
 data class RobotPosition(val x: Double = 0.0, val y: Double = 0.0, val heading: Heading = Heading(0)) {
-    fun updatedBy(r: Double, theta: Double) =
-        RobotPosition(x + r * cos(theta),
-            y + r * sin(theta),
-            heading + Heading(Math.toDegrees(theta).toInt()))
+    fun updatedBy(motion: PolarCoord) =
+        RobotPosition(x + motion.x(), y + motion.y(),
+            heading + Heading(Math.toDegrees(motion.theta).toInt()))
 }
 
 fun groundlinePolarCoordFrom(position: RobotPosition, groundlineX: Int, groundlineY: Int, converter: PixelConverter): PolarCoord {
@@ -56,10 +55,17 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
         cells.set(0, totalCells(), true)
     }
 
+    fun numFilledCells(): Int = cells.cardinality()
+
     fun copy(): GridMap {
         val result = GridMap(cellsPerMeter, metersPerSide)
         result.cells.or(cells)
         return result
+    }
+
+    fun intersect(other: GridMap) {
+        assert(totalCells() == other.totalCells())
+        cells.and(other.cells)
     }
 
     fun set(xMeter: Double, yMeter: Double, width: Double, height: Double, value: Boolean) {
@@ -124,6 +130,12 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
                 set(mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), true)
             }
         }
+    }
+
+    fun copyWith(position: RobotPosition, groundline: ArrayList<Int>, converter: PixelConverter): GridMap {
+        val result = copy()
+        result.setFrom(position, groundline, converter)
+        return result
     }
 }
 
