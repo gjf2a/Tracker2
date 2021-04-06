@@ -2,6 +2,38 @@ package com.example.tracker2
 
 import java.lang.StringBuilder
 import java.util.*
+import kotlin.math.*
+
+class Heading(degrees: Int) {
+    val degrees = ((degrees % 360) + 360) % 360
+
+    fun radians(): Double = Math.toRadians(degrees.toDouble())
+
+    operator fun unaryMinus() = Heading(degrees + 180)
+    operator fun plus(other: Heading) = Heading(degrees + other.degrees)
+    operator fun minus(other: Heading) = Heading(degrees - other.degrees)
+}
+
+fun xy2polar(x: Double, y: Double) = PolarCoord(sqrt(x*x+y*y), atan2(y, x))
+
+data class PolarCoord(val r: Double, val theta: Double) {
+    fun x() = r * cos(theta)
+    fun y() = r * sin(theta)
+
+    fun rotated(rotation: Double) = PolarCoord(r, theta + rotation)
+}
+
+data class RobotPosition(val x: Double = 0.0, val y: Double = 0.0, val heading: Heading = Heading(0)) {
+    fun updatedBy(r: Double, theta: Double) =
+        RobotPosition(x + r * cos(theta),
+            y + r * sin(theta),
+            heading + Heading(Math.toDegrees(theta).toInt()))
+}
+
+fun groundlinePolarCoordFrom(position: RobotPosition, groundlineX: Int, groundlineY: Int, converter: PixelConverter): PolarCoord {
+    val basePolar = xy2polar(converter.xPixel2distance(groundlineX, groundlineY), converter.yPixel2distance(groundlineY)).rotated(position.heading.radians())
+    return xy2polar(position.x + basePolar.x(), position.y + basePolar.y())
+}
 
 fun cell2index(xCell: Int, yCell: Int, cellsPerSide: Int): Int {
     val x = xCell + cellsPerSide/2
@@ -25,17 +57,26 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
     }
 
     fun set(xMeter: Double, yMeter: Double, width: Double, height: Double, value: Boolean) {
-        var m = yMeter
-        while (m < yMeter + height) {
-            var start = meters2index(xMeter, m)
-            var end = meters2index(xMeter + width, m)
+        var row = yMeter
+        var stop = yMeter + height
+        if (row > stop) {
+            val temp = row
+            row = stop
+            stop = temp
+        }
+        //println("row: $row stop: $stop")
+        val width = abs(width)
+        while (row < stop) {
+            var start = meters2index(xMeter, row)
+            var end = meters2index(xMeter + width, row)
             while (start < 0 || start >= totalCells() || end < 0 || end >= totalCells()) {
                 resize()
-                start = meters2index(xMeter, m)
-                end = meters2index(xMeter + width, m)
+                start = meters2index(xMeter, row)
+                end = meters2index(xMeter + width, row)
             }
-            cells.set(start, end, value)
-            m += 1.0/cellsPerMeter
+            cells.set(start, end + 1, value)
+            //println("$start $end $value")
+            row += 1.0/cellsPerMeter
         }
     }
 
@@ -63,6 +104,18 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
             builder.append('\n')
         }
         return builder.toString()
+    }
+
+    fun setFrom(position: RobotPosition, groundline: ArrayList<Int>, converter: PixelConverter) {
+        for (x in groundline.indices) {
+            val mapPoint1 = groundlinePolarCoordFrom(position, x, groundline[x], converter)
+            //println("(${converter.xPixel2distance(x, groundline[x])}, ${converter.yPixel2distance(groundline[x])}) $mapPoint1")
+            if (converter.yPixel2distance(groundline[x]) < MAX_DISTANCE_METERS) {
+                val mapPoint2 =
+                    groundlinePolarCoordFrom(position, x + 1, groundline[x] - 1, converter)
+                set(mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), true)
+            }
+        }
     }
 }
 
