@@ -56,6 +56,12 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
         cells.set(0, totalCells(), true)
     }
 
+    fun copy(): GridMap {
+        val result = GridMap(cellsPerMeter, metersPerSide)
+        result.cells.or(cells)
+        return result
+    }
+
     fun set(xMeter: Double, yMeter: Double, width: Double, height: Double, value: Boolean) {
         var row = yMeter
         var stop = yMeter + height
@@ -105,6 +111,8 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
         }
         return builder.toString()
     }
+
+    override fun equals(other: Any?) = other is GridMap && other.cellsPerMeter == cellsPerMeter && other.metersPerSide == metersPerSide && other.cells == cells
 
     fun setFrom(position: RobotPosition, groundline: ArrayList<Int>, converter: PixelConverter) {
         for (x in groundline.indices) {

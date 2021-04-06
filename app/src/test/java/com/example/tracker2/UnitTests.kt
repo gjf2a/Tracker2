@@ -231,6 +231,8 @@ class UnitTests {
             }
             val map = mapFrom(groundlines[g], 20.0, converter)
             assert(map.toString() == maps[g])
+            val copy = map.copy()
+            assert(map == copy)
         }
     }
 
