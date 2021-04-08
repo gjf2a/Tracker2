@@ -53,7 +53,11 @@ class GridMapFilter(cellsPerMeter: Double, metersPerSide: Double, position: Robo
             val mapPoint2 =
                 groundlinePolarCoordFrom(position, x + 1, groundline[x] - 1, converter)
             clearMap.setLine(position.x, position.y, mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), false)
-
+        }
+        for (x in groundline.indices) {
+            val mapPoint1 = groundlinePolarCoordFrom(position, x, groundline[x], converter)
+            val mapPoint2 =
+                groundlinePolarCoordFrom(position, x + 1, groundline[x] - 1, converter)
             if (converter.yPixel2distance(groundline[x]) < MAX_DISTANCE_METERS) {
                 filledMap.set(mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), true)
                 clearMap.set(mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), true)

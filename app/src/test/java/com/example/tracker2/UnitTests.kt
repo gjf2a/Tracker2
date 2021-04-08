@@ -248,8 +248,12 @@ class UnitTests {
     fun rotateTest() {
         val converter = PixelConverter(CalibrationLine(6, 6), CalibrationLine(5, 3), 10, 10)
         val map = GridMap(2.0, 2.0)
-        map.setFrom(RobotPosition(1.0, 2.0, Heading(45)), arrayListOf(4, 8, 7, 6, 4, 4, 6, 7, 8, 4), converter)
+        val pos = RobotPosition(1.0, 2.0, Heading(45))
+        val groundline = arrayListOf(4, 8, 7, 6, 4, 4, 6, 7, 8, 4)
+        map.setFrom(pos, groundline, converter)
         assert(map.toString() == rotateTestMap)
+        val filter = GridMapFilter(map.cellsPerMeter, map.metersPerSide, pos, groundline, converter)
+        assert(filter.similarityTo(map) == 1.0)
     }
 
     @Test
