@@ -4,8 +4,10 @@ import java.lang.StringBuilder
 import java.util.*
 import kotlin.math.*
 
-class Heading(degrees: Int) {
-    val degrees = ((degrees % 360) + 360) % 360
+data class Heading(private var degrees: Int) {
+    init {
+        degrees = ((degrees % 360) + 360) % 360
+    }
 
     fun radians(): Double = Math.toRadians(degrees.toDouble())
 
@@ -40,6 +42,46 @@ fun cell2index(xCell: Int, yCell: Int, cellsPerSide: Int): Int {
     return y * cellsPerSide + x
 }
 
+class GridMapFilter(cellsPerMeter: Double, metersPerSide: Double, position: RobotPosition, groundline: ArrayList<Int>, converter: PixelConverter) {
+    val clearMap = GridMap(cellsPerMeter, metersPerSide)
+    val filledMap = GridMap(cellsPerMeter, metersPerSide)
+
+    init {
+        clearMap.setAll()
+        for (x in groundline.indices) {
+            val mapPoint1 = groundlinePolarCoordFrom(position, x, groundline[x], converter)
+            val mapPoint2 =
+                groundlinePolarCoordFrom(position, x + 1, groundline[x] - 1, converter)
+            clearMap.setLine(position.x, position.y, mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), false)
+
+            if (converter.yPixel2distance(groundline[x]) < MAX_DISTANCE_METERS) {
+                filledMap.set(mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), true)
+                clearMap.set(mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), true)
+            }
+        }
+    }
+
+    fun applyTo(map: GridMap) {
+        map.intersect(clearMap)
+        map.union(filledMap)
+    }
+
+    fun similarityTo(map: GridMap): Double {
+        val clearFilter = clearMap.copy()
+        clearFilter.flipAll()
+        val totalPointsOfConcern = clearFilter.numFilledCells() + filledMap.numFilledCells()
+
+        val filledFilter = filledMap.copy()
+        filledFilter.intersect(map)
+
+        val mapInvert = map.copy()
+        mapInvert.flipAll()
+        clearFilter.intersect(mapInvert)
+
+        return (clearFilter.numFilledCells() + filledFilter.numFilledCells()).toDouble() / totalPointsOfConcern.toDouble()
+    }
+}
+
 class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
     private var cells = makeCells()
     fun cellsPerSide() = (cellsPerMeter * metersPerSide).toInt()
@@ -55,6 +97,10 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
         cells.set(0, totalCells(), true)
     }
 
+    fun flipAll() {
+        cells.flip(0, totalCells())
+    }
+
     fun numFilledCells(): Int = cells.cardinality()
 
     fun copy(): GridMap {
@@ -64,8 +110,13 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
     }
 
     fun intersect(other: GridMap) {
-        assert(totalCells() == other.totalCells())
+        align(other)
         cells.and(other.cells)
+    }
+
+    fun union(other: GridMap) {
+        align(other)
+        cells.or(other.cells)
     }
 
     fun set(xMeter: Double, yMeter: Double, width: Double, height: Double, value: Boolean) {
@@ -76,7 +127,6 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
             row = stop
             stop = temp
         }
-        //println("row: $row stop: $stop")
         val width = abs(width)
         while (row < stop) {
             var start = meters2index(xMeter, row)
@@ -87,12 +137,19 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
                 end = meters2index(xMeter + width, row)
             }
             cells.set(start, end + 1, value)
-            //println("$start $end $value")
             row += 1.0/cellsPerMeter
         }
     }
 
-    private fun resize() {
+    private fun align(other: GridMap) {
+        if (other.metersPerSide < this.metersPerSide) {
+            other.resize(this.metersPerSide)
+        } else if (this.metersPerSide < other.metersPerSide) {
+            this.resize(other.metersPerSide)
+        }
+    }
+
+    private fun resize(newMetersPerSide: Double = metersPerSide * 2) {
         val oldCells = cells
         val oldSize = cellsPerSide()
         val oldStart = -oldSize/2
@@ -121,20 +178,36 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
     override fun equals(other: Any?) = other is GridMap && other.cellsPerMeter == cellsPerMeter && other.metersPerSide == metersPerSide && other.cells == cells
 
     fun setFrom(position: RobotPosition, groundline: ArrayList<Int>, converter: PixelConverter) {
-        for (x in groundline.indices) {
-            val mapPoint1 = groundlinePolarCoordFrom(position, x, groundline[x], converter)
-            //println("(${converter.xPixel2distance(x, groundline[x])}, ${converter.yPixel2distance(groundline[x])}) $mapPoint1")
-            if (converter.yPixel2distance(groundline[x]) < MAX_DISTANCE_METERS) {
-                val mapPoint2 =
-                    groundlinePolarCoordFrom(position, x + 1, groundline[x] - 1, converter)
-                set(mapPoint1.x(), mapPoint1.y(), mapPoint2.x() - mapPoint1.x(), mapPoint2.y() - mapPoint1.y(), true)
+        val filter = GridMapFilter(cellsPerMeter, metersPerSide, position, groundline, converter)
+        filter.applyTo(this)
+    }
+
+    fun setLine(xMeter1: Double, yMeter1: Double, xMeter2: Double, yMeter2: Double, width: Double, height: Double, value: Boolean) {
+        if (xMeter1 > xMeter2) {
+            setLine(xMeter2, yMeter2, xMeter1, yMeter1, width, height, value)
+        } else {
+            val yContinue: (Double) -> Boolean = if (yMeter2 > yMeter1) {{it < yMeter2}} else {{it > yMeter2}}
+            val yStep = if (yMeter2 > yMeter1) {height} else {-height}
+            val dx = xMeter2 - xMeter1
+            val dy = abs(yMeter2 - yMeter1)
+            var a = 0.0
+            var b = 0.0
+            while (xMeter1 + a < xMeter2 && yContinue(yMeter1 + b)) {
+                set(xMeter1 + a, yMeter1 + b, width, height, value)
+                when {
+                    dy == 0.0 -> a += width
+                    dx == 0.0 -> b += yStep
+                    a/dx < b/dy -> a += width
+                    else -> b += yStep
+                }
             }
         }
     }
 
-    fun copyWith(position: RobotPosition, groundline: ArrayList<Int>, converter: PixelConverter): GridMap {
-        val result = copy()
-        result.setFrom(position, groundline, converter)
+    override fun hashCode(): Int {
+        var result = cellsPerMeter.hashCode()
+        result = 31 * result + metersPerSide.hashCode()
+        result = 31 * result + cells.hashCode()
         return result
     }
 }

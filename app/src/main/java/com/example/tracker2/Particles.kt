@@ -1,5 +1,6 @@
 package com.example.tracker2
 
+import android.graphics.Bitmap
 
 
 class Particle(val robot: RobotPosition, val map: GridMap) {
@@ -53,5 +54,13 @@ class ParticleFilter(var particles: ArrayList<Particle>,
         for (i in 0 until numParticles) {
             particles.add(distribution.randomPick().copy())
         }
+    }
+}
+
+class ParticleFilterClassifier(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJump: Int)
+    : GroundlineKmeans(images, k, minNotFloor, maxJump) {
+
+    override fun classify(image: Bitmap) {
+        super.classify(image)
     }
 }

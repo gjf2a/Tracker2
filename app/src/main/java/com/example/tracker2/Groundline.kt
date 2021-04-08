@@ -155,7 +155,7 @@ class GroundlineKnn(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJump
     }
 }
 
-class GroundlineKmeans(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJump: Int)
+open class GroundlineKmeans(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJump: Int)
     : Groundline<KMeansClassifier<ColorTriple, Boolean, Long>>(images, minNotFloor, maxJump,
     { KMeansClassifier(k, ::colorSSD, it, ::colorMean) })
 
