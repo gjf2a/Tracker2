@@ -6,6 +6,7 @@ import android.util.Log
 
 abstract class BitmapClassifier {
     private val listeners = java.util.ArrayList<ClassifierListener>()
+    private val messages = java.util.ArrayDeque<String>()
 
     fun addListener(listener: ClassifierListener) {
         listeners.add(listener)
@@ -22,6 +23,14 @@ abstract class BitmapClassifier {
             listener.receiveClassification(msg)
         }
     }
+
+    fun relayMessageTo(msg: String) {
+        messages.addLast(msg)
+    }
+
+    fun messagesWaiting() = messages.isNotEmpty()
+
+    fun retrieveMessage(): String = messages.removeFirst()
 
     abstract fun classify(image: Bitmap)
     abstract fun assess(): String

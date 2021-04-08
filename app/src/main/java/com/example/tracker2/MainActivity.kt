@@ -181,26 +181,33 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
             for (message in incoming) {
                 Log.i("MainActivity", "Processing '$message'")
                 val interpreted = interpret(message, outputDir, arrayListOf(this, talker))
-                if (interpreted.cmdType == CommandType.COMMENT) {
-                    show(interpreted.msg)
-                } else if (interpreted.cmdType == CommandType.CREATE_CLASSIFIER) {
-                    addClassifier(interpreted.classifier)
-                    classifier_overlay.replaceOverlayers(interpreted.classifier.overlayers())
-                } else if (interpreted.cmdType == CommandType.PAUSE_CLASSIFIER) {
-                    show("FPS ${analyzer.currentFPS()}")
-                    analyzer.pauseClassifier()
-                    classifier_overlay.clearOverlayers()
-                } else if (interpreted.cmdType == CommandType.RESUME_CLASSIFIER) {
-                    val id = interpreted.resumeIndex
-                    if (id >= analyzer.numClassifiers() || id < 0) {
-                        show("Id $id not valid")
-                    } else {
-                        analyzer.resumeClassifier(id)
-                        classifier_overlay.replaceOverlayers(analyzer.getCurrentClassifier().overlayers())
+                when {
+                    interpreted.cmdType == CommandType.COMMENT -> show(interpreted.msg)
+                    interpreted.cmdType == CommandType.CREATE_CLASSIFIER -> {
+                        addClassifier(interpreted.classifier)
+                        classifier_overlay.replaceOverlayers(interpreted.classifier.overlayers())
                     }
-                } else if (interpreted.cmdType == CommandType.SPEAK) {
-                    show("Saying: '${interpreted.msg}'")
-                    tts!!.speak(interpreted.msg, TextToSpeech.QUEUE_FLUSH, null, "")
+                    interpreted.cmdType == CommandType.PAUSE_CLASSIFIER -> {
+                        show("FPS ${analyzer.currentFPS()}")
+                        analyzer.pauseClassifier()
+                        classifier_overlay.clearOverlayers()
+                    }
+                    interpreted.cmdType == CommandType.RESUME_CLASSIFIER -> {
+                        val id = interpreted.resumeIndex
+                        if (id >= analyzer.numClassifiers() || id < 0) {
+                            show("Id $id not valid")
+                        } else {
+                            analyzer.resumeClassifier(id)
+                            classifier_overlay.replaceOverlayers(analyzer.getCurrentClassifier().overlayers())
+                        }
+                    }
+                    interpreted.cmdType == CommandType.SPEAK -> {
+                        show("Saying: '${interpreted.msg}'")
+                        tts!!.speak(interpreted.msg, TextToSpeech.QUEUE_FLUSH, null, "")
+                    }
+                    interpreted.cmdType == CommandType.MESSAGE -> {
+                        analyzer.getCurrentClassifier().relayMessageTo(interpreted.msg)
+                    }
                 }
 
                 if (interpreted.msg.isNotEmpty()) {

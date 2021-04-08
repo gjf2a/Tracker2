@@ -45,18 +45,20 @@ fun addColorsFrom(image: Bitmap, rect: Rect, labeledData: ArrayList<Pair<ColorTr
     }
 }
 
-open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
-    (images: ArrayList<Bitmap>, val minNotFloor: Int, val maxJumpSize: Int, makeClassifier: (ArrayList<Pair<ColorTriple,Boolean>>)->C) : BitmapClassifier() {
+open class Groundline<C : SimpleClassifier<ColorTriple, Boolean>>
+    (
+    images: ArrayList<Bitmap>,
+    val minNotFloor: Int,
+    val maxJumpSize: Int,
+    makeClassifier: (ArrayList<Pair<ColorTriple, Boolean>>) -> C
+) : BitmapClassifier() {
     val isFloor = makeClassifier(makeLabeledColorsFrom(images))
     val overlayer = GroundlineOverlayer()
     val width = images[0].width
     val height = images[0].height
 
     override fun classify(image: Bitmap) {
-        var x2y = findGroundline(image)
-        if (removesNoise()) {
-            x2y = filterNoise(x2y)
-        }
+        val x2y = findFilteredGroundline(image)
         val best = highestPoint(x2y)
         overlayer.updateHeights(x2y, height, best.first)
         Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
@@ -88,6 +90,11 @@ open class Groundline<C: SimpleClassifier<ColorTriple, Boolean>>
             x2y.add(findNotFloor(scaled, x))
         }
         return x2y
+    }
+
+    fun findFilteredGroundline(image: Bitmap): ArrayList<Int> {
+        val groundline = findGroundline(image)
+        return if (removesNoise()) {filterNoise(groundline)} else {groundline}
     }
 
     private fun findNotFloor(scaled: Bitmap, x: Int): Int {

@@ -23,6 +23,12 @@ data class PolarCoord(val r: Double, val theta: Double) {
     fun y() = r * sin(theta)
 
     fun rotated(rotation: Double) = PolarCoord(r, theta + rotation)
+
+    operator fun plus(other: PolarCoord): PolarCoord {
+        val xSum = x() + other.x()
+        val ySum = y() + other.y()
+        return PolarCoord(sqrt(xSum.pow(2.0) + ySum.pow(2.0)), atan2(ySum, xSum))
+    }
 }
 
 data class RobotPosition(val x: Double = 0.0, val y: Double = 0.0, val heading: Heading = Heading(0)) {

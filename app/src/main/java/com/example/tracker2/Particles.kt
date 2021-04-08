@@ -1,6 +1,7 @@
 package com.example.tracker2
 
 import android.graphics.Bitmap
+import android.util.Log
 
 
 class Particle(val robot: RobotPosition, val map: GridMap) {
@@ -16,26 +17,33 @@ class Particle(val robot: RobotPosition, val map: GridMap) {
     fun copy() = Particle(robot, map.copy())
 }
 
-fun addUniformNoise(value: Double, noiseRange: Double) = value - noiseRange/2.0 + Math.random()*noiseRange
+fun addUniformNoise(value: Double, rangeMin: Double, rangeMax: Double) =
+    value + rangeMin + Math.random()*(rangeMax - rangeMin)
 
-fun addUniformNoise(value: PolarCoord, noiseRange: PolarCoord) =
-    PolarCoord(addUniformNoise(value.r, noiseRange.r),
-        addUniformNoise(value.theta, noiseRange.theta))
+fun addUniformNoise(value: PolarCoord, rangeMin: PolarCoord, rangeMax: PolarCoord) =
+    PolarCoord(addUniformNoise(value.r, rangeMin.r, rangeMax.r),
+        addUniformNoise(value.theta, rangeMin.theta, rangeMax.theta))
 
-class ParticleFilter(var particles: ArrayList<Particle>,
-                     val numParticles: Int,
-                     val motionNoiseRange: PolarCoord,
-                     val cellsPerMeter: Double,
+class ParticleFilter(val numParticles: Int,
+                     val noiseRangeMin: PolarCoord,
+                     val noiseRangeMax: PolarCoord,
+                     cellsPerMeter: Double,
                      val converter: PixelConverter) {
+
+    val particles = ArrayList<Particle>()
+    var best = blankParticle(cellsPerMeter)
+
     init {
         for (i in 0 until numParticles) {
-            particles.add(Particle(RobotPosition(0.0, 0.0, Heading(0)), GridMap(cellsPerMeter)))
+            particles.add(blankParticle(cellsPerMeter))
         }
     }
 
+    private fun blankParticle(cellsPerMeter: Double) = Particle(RobotPosition(0.0, 0.0, Heading(0)), GridMap(cellsPerMeter))
+
     fun addNewGroundline(motion: PolarCoord, groundline: ArrayList<Int>) {
         for (particle in particles) {
-            particle.robot.updatedBy(addUniformNoise(motion, motionNoiseRange))
+            particle.robot.updatedBy(addUniformNoise(motion, noiseRangeMin, noiseRangeMax))
             particle.map.setFrom(particle.robot, groundline, converter)
         }
     }
@@ -50,6 +58,7 @@ class ParticleFilter(var particles: ArrayList<Particle>,
         for (particle in particles) {
             distribution.add(particle, particle.errorVs(particle.robot.updatedBy(motion), groundline, converter))
         }
+        best = distribution.highestWeightSample()
         particles.clear()
         for (i in 0 until numParticles) {
             particles.add(distribution.randomPick().copy())
@@ -57,10 +66,37 @@ class ParticleFilter(var particles: ArrayList<Particle>,
     }
 }
 
-class ParticleFilterClassifier(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJump: Int)
-    : GroundlineKmeans(images, k, minNotFloor, maxJump) {
+class ParticleFilterClassifier(
+    images: ArrayList<Bitmap>,
+    k: Int,
+    minNotFloor: Int,
+    maxJump: Int,
+    numParticles: Int,
+    noiseRangeMin: PolarCoord,
+    noiseRangeMax: PolarCoord,
+    cellsPerMeter: Double,
+    meter1: CalibrationLine,
+    meter2: CalibrationLine
+) : GroundlineKmeans(images, k, minNotFloor, maxJump) {
+
+    val filter = ParticleFilter(numParticles, noiseRangeMin, noiseRangeMax, cellsPerMeter, PixelConverter(meter1, meter2, images[0].width, images[0].height))
 
     override fun classify(image: Bitmap) {
-        super.classify(image)
+        val x2y = findFilteredGroundline(image)
+        val best = highestPoint(x2y)
+        overlayer.updateHeights(x2y, height, best.first)
+        notifyListeners("heading ${best.first} ${best.second}")
+    }
+
+    fun updateFilter(groundline: ArrayList<Int>) {
+        if (messagesWaiting()) {
+            var heading = PolarCoord(0.0, 0.0)
+            while (messagesWaiting()) {
+                val message = retrieveMessage().split(" ")
+                heading += PolarCoord(message[0].toDouble(), message[1].toDouble())
+            }
+            filter.iterate(heading, groundline)
+            notifyListeners("pos ${filter.best.robot.x} ${filter.best.robot.y} ${filter.best.robot.heading.radians()}")
+        }
     }
 }

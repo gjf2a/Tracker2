@@ -21,6 +21,8 @@ class Distribution<T> {
         return distro.floorEntry(num)!!.value
     }
 
+    fun highestWeightSample() = distro.lastEntry().value!!
+
     override fun toString(): String {
         return distro.toString()
     }

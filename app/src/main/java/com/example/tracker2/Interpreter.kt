@@ -29,14 +29,16 @@ interface ClassifierListener {
 }
 
 enum class CommandType {
-    CREATE_CLASSIFIER, PAUSE_CLASSIFIER, COMMENT, RESUME_CLASSIFIER, SPEAK, ERROR
+    CREATE_CLASSIFIER, PAUSE_CLASSIFIER, COMMENT, RESUME_CLASSIFIER, SPEAK, MESSAGE, ERROR
 }
 
 data class InterpreterResult(val cmdType: CommandType, val classifier: BitmapClassifier, val resumeIndex: Int, val msg: String)
 
-fun simpleResult(cmd: CommandType, msg: String): InterpreterResult {
-    return InterpreterResult(cmd, DummyClassifier(), 0, msg)
-}
+fun simpleResult(cmd: CommandType, msg: String) =
+    InterpreterResult(cmd, DummyClassifier(), 0, msg)
+
+fun relayResult(cmd: CommandType, command: List<String>) =
+    simpleResult(cmd, command.subList(1, command.size).joinToString(separator = " "))
 
 fun resumeResult(id: Int): InterpreterResult {
     return InterpreterResult(
@@ -62,25 +64,19 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
             if (command.isNotEmpty()) {
                 when {
                     command[0] == "cv" -> {
-                        if (command.size == 6 && command[1] == "knn") {
-                            interpretKnn(command, manager, listeners)
-                        } else if (command.size == 7 && command[1] == "knn_brief") {
-                            interpretBrief(command, manager, listeners)
-                        } else if (command.size == 6 && command[1] == "kmeans") {
-                            interpretKmeans(command, manager, listeners)
-                        } else if (command.size >= 8 && command[1] == "groundline") {
-                            interpretGroundline(::GroundlineKmeans, command, manager, listeners)
-                        } else if (command.size == 2 && command[1] == "pause") {
-                            simpleResult(CommandType.PAUSE_CLASSIFIER, "Classifier paused")
-                        } else if (command.size == 3 && command[1] == "resume") {
-                            resumeResult(Integer.parseInt(command[2]))
-                        } else {
-                            simpleResult(CommandType.ERROR, "Unrecognized cv cmd: '$command'")
+                        when {
+                            command.size == 6 && command[1] == "knn" -> interpretKnn(command, manager, listeners)
+                            command.size == 7 && command[1] == "knn_brief" -> interpretBrief(command, manager, listeners)
+                            command.size == 6 && command[1] == "kmeans" -> interpretKmeans(command, manager, listeners)
+                            command.size >= 8 && command[1] == "groundline" -> interpretGroundline(::GroundlineKmeans, command, manager, listeners)
+                            command.size >= 19 && command[1] == "particle" -> interpretParticle(command, manager, listeners)
+                            command.size == 2 && command[1] == "pause" -> simpleResult(CommandType.PAUSE_CLASSIFIER, "Classifier paused")
+                            command.size == 3 && command[1] == "resume" -> resumeResult(Integer.parseInt(command[2]))
+                            else -> simpleResult(CommandType.ERROR, "Unrecognized cv cmd: '$command'")
                         }
                     }
-                    command[0] == "say" -> {
-                        simpleResult(CommandType.SPEAK, command.subList(1, command.size).joinToString(separator = " "))
-                    }
+                    command[0] == "say" -> relayResult(CommandType.SPEAK, command)
+                    command[0] == "msg" -> relayResult(CommandType.MESSAGE, command)
                     else -> {
                         simpleResult(CommandType.ERROR, "Unrecognized cmd type: '${command[0]}'")
                     }
@@ -91,6 +87,38 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
         }
     } catch (nfe: NumberFormatException) {
         return simpleResult(CommandType.ERROR, "Integer expected")
+    }
+}
+
+fun interpretParticle(command: List<String>, manager: FileManager, listeners: List<ClassifierListener>): InterpreterResult {
+    val maxColors = command[2].toInt()
+    val minNotFloor = command[3].toInt()
+    val maxJump = command[4].toInt()
+    val numParticles = command[5].toInt()
+    val noiseMin = PolarCoord(command[6].toDouble(), command[7].toDouble())
+    val noiseMax = PolarCoord(command[8].toDouble(), command[9].toDouble())
+    val cellsPerMeter = command[10].toDouble()
+    val width = command[11].toInt()
+    val height = command[12].toInt()
+    val meter1 = CalibrationLine(command[14].toInt(), command[13].toInt())
+    val meter2 = CalibrationLine(command[16].toInt(), command[15].toInt())
+    val project = command[17]
+    if (manager.projectExists(project)) {
+        val label = command[18]
+        if (manager.labelExists(project, label)) {
+            val choices = ArrayList<Bitmap>()
+            for (i in getPhotoNumbers(command, 19, project, label, manager)) {
+                choices.add(manager.loadImage(project, label, i, width, height))
+            }
+            val particle = ParticleFilterClassifier(choices, maxColors, minNotFloor, maxJump,
+                numParticles, noiseMin, noiseMax, cellsPerMeter, meter1, meter2)
+            particle.addListeners(listeners)
+            return createClassifier(particle, "Activating Particle Filter: maxColors=$maxColors minNotFloor=$minNotFloor maxJump=$maxJump numParticles=$numParticles noise=($noiseMin,$noiseMax) cellsPerMeter=$cellsPerMeter img:(${width}x${height} meter1=$meter1 meter2=$meter2")
+        } else {
+            return simpleResult(CommandType.ERROR,"Label '$label' does not exist")
+        }
+    } else {
+        return simpleResult(CommandType.ERROR, "Project '$project' does not exist")
     }
 }
 
@@ -130,15 +158,7 @@ fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroun
                 height + 1
             }
             for (i in getPhotoNumbers(command, start, project, label, manager)) {
-                choices.add(
-                    manager.loadImage(
-                        project,
-                        label,
-                        i,
-                        width,
-                        height
-                    )
-                )
+                choices.add(manager.loadImage(project, label, i, width, height))
             }
             val groundline = makeGroundline(choices, maxColors, minNotFloor, maxJump)
             groundline.addListeners(listeners)
