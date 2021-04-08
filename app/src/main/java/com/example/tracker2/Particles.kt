@@ -1,7 +1,6 @@
 package com.example.tracker2
 
 import android.graphics.Bitmap
-import android.util.Log
 
 
 class Particle(val robot: RobotPosition, val map: GridMap) {
@@ -86,6 +85,7 @@ class ParticleFilterClassifier(
         val best = highestPoint(x2y)
         overlayer.updateHeights(x2y, height, best.first)
         notifyListeners("heading ${best.first} ${best.second}")
+        updateFilter(x2y)
     }
 
     fun updateFilter(groundline: ArrayList<Int>) {
