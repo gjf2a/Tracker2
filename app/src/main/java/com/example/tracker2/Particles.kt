@@ -79,6 +79,7 @@ class ParticleFilterClassifier(
 ) : GroundlineKmeans(images, k, minNotFloor, maxJump) {
 
     val filter = ParticleFilter(numParticles, noiseRangeMin, noiseRangeMax, cellsPerMeter, PixelConverter(meter1, meter2, images[0].width, images[0].height))
+    val mapOverlayer = MapOverlayer(GridMap(cellsPerMeter))
 
     override fun classify(image: Bitmap) {
         val x2y = findFilteredGroundline(image)
@@ -96,7 +97,16 @@ class ParticleFilterClassifier(
                 heading += PolarCoord(message[0].toDouble(), message[1].toDouble())
             }
             filter.iterate(heading, groundline)
+            mapOverlayer.map = filter.best.map.copy()
             notifyListeners("pos ${filter.best.robot.x} ${filter.best.robot.y} ${filter.best.robot.heading.radians()}")
+        }
+    }
+
+    override fun overlayers(): java.util.ArrayList<Overlayer> {
+        return if (altDisplay) {
+            arrayListOf(mapOverlayer)
+        } else {
+            super.overlayers()
         }
     }
 }

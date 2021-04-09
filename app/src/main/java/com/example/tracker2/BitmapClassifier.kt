@@ -7,6 +7,7 @@ import android.util.Log
 abstract class BitmapClassifier {
     private val listeners = java.util.ArrayList<ClassifierListener>()
     private val messages = java.util.ArrayDeque<String>()
+    protected var altDisplay = false
 
     fun addListener(listener: ClassifierListener) {
         listeners.add(listener)
@@ -31,6 +32,14 @@ abstract class BitmapClassifier {
     fun messagesWaiting() = messages.isNotEmpty()
 
     fun retrieveMessage(): String = messages.removeFirst()
+
+    fun showAlternative() {
+        altDisplay = true
+    }
+
+    fun showVideo() {
+        altDisplay = false
+    }
 
     abstract fun classify(image: Bitmap)
     abstract fun assess(): String

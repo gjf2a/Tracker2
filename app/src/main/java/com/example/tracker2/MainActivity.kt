@@ -120,6 +120,8 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
 
         start_robot.setOnClickListener { safeSend(START) }
         stop_robot.setOnClickListener { safeSend(STOP) }
+        
+        extra_overlay.setOnCheckedChangeListener { _, b -> if (b) {analyzer.getCurrentClassifier().showAlternative()} else {analyzer.getCurrentClassifier().showVideo()} }
 
         val intentHasCommand = intent.extras?.containsKey(COMMAND_FLAG)
         Log.i("MainActivity", "intentHasCommand: $intentHasCommand")

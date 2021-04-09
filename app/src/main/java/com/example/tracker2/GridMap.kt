@@ -1,5 +1,8 @@
 package com.example.tracker2
 
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import java.lang.StringBuilder
 import java.util.*
 import kotlin.math.*
@@ -99,6 +102,7 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
 
     private fun makeCells() = BitSet(totalCells())
 
+    private fun cell2index(xCell: Int, yCell: Int) = yCell * cellsPerSide() + xCell
     private fun meter2cell(meter: Double): Int = (meter * cellsPerMeter).toInt()
     private fun meters2index(xMeter: Double, yMeter: Double): Int =
         meter2cell(yMeter + metersPerSide/2) * cellsPerSide() + meter2cell(xMeter + metersPerSide/2)
@@ -173,6 +177,8 @@ class GridMap(val cellsPerMeter: Double, var metersPerSide: Double = 2.5) {
     }
 
     fun isFilled(xMeter: Double, yMeter: Double): Boolean = cells.get(meters2index(xMeter, yMeter))
+
+    fun getCell(xCell: Int, yCell: Int) = cells.get(cell2index(xCell, yCell))
 
     override fun toString(): String {
         val builder = StringBuilder()
@@ -277,3 +283,26 @@ class PixelConverter(val meter1: CalibrationLine, val meter2: CalibrationLine,
     }
 }
 
+class MapOverlayer(var map: GridMap) : Overlayer {
+    val clearPaint = Paint().apply {
+        isAntiAlias = true
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+    }
+
+    val fillPaint = Paint().apply {
+            isAntiAlias = true
+            color = Color.RED
+            style = Paint.Style.STROKE
+        }
+
+    override fun draw(canvas: Canvas) {
+        for (x in 0 until canvas.width) {
+            val xCell = x * map.cellsPerSide() / canvas.width
+            for (y in 0 until canvas.height) {
+                val yCell = y * map.cellsPerSide() / canvas.height
+                canvas.drawPoint(x.toFloat(), y.toFloat(), if (map.getCell(xCell, yCell)) {fillPaint} else {clearPaint})
+            }
+        }
+    }
+}

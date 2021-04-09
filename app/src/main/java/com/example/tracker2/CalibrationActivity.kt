@@ -15,7 +15,7 @@ const val CALIBRATION_MAX = 100
 fun scale2float(value: Int, targetRange: Int): Float = (value * targetRange).toFloat() / CALIBRATION_MAX
 fun scale2int(value: Int, targetRange: Int): Int = (value * targetRange) / CALIBRATION_MAX
 
-class CalibrationLine(var height: Int, var width: Int) {
+data class CalibrationLine(var height: Int, var width: Int) {
     fun up() {
         height = (height - CALIBRATION_DELTA).coerceAtLeast(0)
     }
