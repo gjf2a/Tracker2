@@ -25,7 +25,7 @@ fun suffixStartingAnyOf(candidates: List<String>, msg: String): String {
 }
 
 interface ClassifierListener {
-    fun receiveClassification(msg: String)
+    fun receiveClassification(msg: String): Int
 }
 
 enum class CommandType {
@@ -68,6 +68,7 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
                             command.size == 6 && command[1] == "knn" -> interpretKnn(command, manager, listeners)
                             command.size == 7 && command[1] == "knn_brief" -> interpretBrief(command, manager, listeners)
                             command.size == 6 && command[1] == "kmeans" -> interpretKmeans(command, manager, listeners)
+                            command.size >= 7 && command[1] == "colorblob" -> interpretColorBlob(command, manager, listeners)
                             command.size >= 8 && command[1] == "groundline" -> interpretGroundline(::GroundlineKmeans, command, manager, listeners)
                             command.size >= 19 && command[1] == "particle" -> interpretParticle(command, manager, listeners)
                             command.size == 2 && command[1] == "pause" -> simpleResult(CommandType.PAUSE_CLASSIFIER, "Classifier paused")
@@ -133,6 +134,33 @@ fun interpretKmeans(command: List<String>, manager: FileManager, listeners: List
         createClassifier(kmeans, "Activating kMeans classifer; k=$k; project=$project\n")
     } else {
         simpleResult(CommandType.ERROR,"Project $project does not exist")
+    }
+}
+
+fun interpretColorBlob(command: List<String>, manager: FileManager, listeners: List<ClassifierListener>): InterpreterResult {
+    val maxColors = Integer.parseInt(command[2])
+    val project = command[3]
+    if (manager.projectExists(project)) {
+        val label = command[4]
+        if (manager.labelExists(project, label)) {
+            val width = Integer.parseInt(command[5])
+            val height = Integer.parseInt(command[6])
+            val choices = ArrayList<Bitmap>()
+            val start = 7
+            for (i in getPhotoNumbers(command, start, project, label, manager)) {
+                choices.add(manager.loadImage(project, label, i, width, height))
+            }
+            val classifier = ColorBlob(choices, maxColors)
+            classifier.addListeners(listeners)
+            return createClassifier(
+                classifier,
+                "Activating ColorBlob: $maxColors $project $label (${width}x${height})"
+            )
+        } else {
+            return simpleResult(CommandType.ERROR, "Label '$label' does not exist")
+        }
+    } else {
+        return simpleResult(CommandType.ERROR, "Project '$project' does not exist")
     }
 }
 

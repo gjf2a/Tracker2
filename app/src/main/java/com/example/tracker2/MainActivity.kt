@@ -150,8 +150,8 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
 
     private fun safeSend(msg: String) {
         try {
-            talker.receiveClassification(msg)
-            show(">$msg\n")
+            val bytes = talker.receiveClassification(msg)
+            show(">$msg ($bytes bytes)\n")
         } catch (e: Exception) {
             Log.i("MainActivity", "Exception when sending '$msg': $e")
             show("Exception when sending '$msg': $e\n")
@@ -183,6 +183,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
             for (message in incoming) {
                 Log.i("MainActivity", "Processing '$message'")
                 val interpreted = interpret(message, outputDir, arrayListOf(this, talker))
+                var showMsg = interpreted.msg.isNotEmpty()
                 when {
                     interpreted.cmdType == CommandType.COMMENT -> show(interpreted.msg)
                     interpreted.cmdType == CommandType.CREATE_CLASSIFIER -> {
@@ -198,6 +199,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
                         val id = interpreted.resumeIndex
                         if (id >= analyzer.numClassifiers() || id < 0) {
                             show("Id $id not valid")
+                            showMsg = false
                         } else {
                             analyzer.resumeClassifier(id)
                             classifier_overlay.replaceOverlayers(analyzer.getCurrentClassifier().overlayers())
@@ -212,7 +214,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
                     }
                 }
 
-                if (interpreted.msg.isNotEmpty()) {
+                if (showMsg) {
                     val msg = interpreted.msg.trim() + '\n'
                     show(msg)
                 }
@@ -357,11 +359,12 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
         runOnUiThread { fps_info.text = "FPS: ${"%.2f".format(fps)}" }
     }
 
-    override fun receiveClassification(msg: String) {
+    override fun receiveClassification(msg: String): Int {
         runOnUiThread {
             cv_info.text = msg
             classifier_overlay.invalidate()
         }
+        return 0
     }
 }
 

@@ -8,7 +8,7 @@ import kotlinx.android.synthetic.main.activity_test.*
 import java.io.File
 
 class DummyTarget : ClassifierListener {
-    override fun receiveClassification(msg: String) {}
+    override fun receiveClassification(msg: String) = 0
 }
 
 const val COMMAND_FLAG: String = "COMMAND"

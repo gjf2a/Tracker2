@@ -111,9 +111,7 @@ open class Groundline<C : SimpleClassifier<ColorTriple, Boolean>>
         return y + notFloorStreak
     }
 
-    override fun assess(): String {
-        return "Groundline ready\n"
-    }
+    override fun assess() = "Groundline ready\n"
 
     override fun overlayers(): ArrayList<Overlayer> {
         return arrayListOf(overlayer)

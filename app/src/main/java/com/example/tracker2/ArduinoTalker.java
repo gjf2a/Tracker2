@@ -178,7 +178,7 @@ public class ArduinoTalker implements ClassifierListener {
     // Adapted from https://github.com/felHR85/UsbSerial/blob/master/usbserial/src/main/java/com/felhr/usbserial/CDCSerialDevice.java
     private int setControlCommand(int request, int value, byte[] data) {
         int response = connection.controlTransfer(CDC_REQTYPE_HOST2DEVICE, request, value, 0, data, data.length, 0);
-        Log.i(TAG, "Control Transfer Response: " + String.valueOf(response));
+        Log.i(TAG, "Control Transfer Response: " + response);
         return response;
     }
 
@@ -195,12 +195,13 @@ public class ArduinoTalker implements ClassifierListener {
         return send(bytes) == 1;
     }
 
-    public void receiveClassification(String s) {
+    public int receiveClassification(String s) {
         if (!s.endsWith("\n")) {
             s += "\n";
         }
         Log.i(TAG, "Sending: '" + s + "'");
         int sent = send(s.getBytes());
         Log.i(TAG, "Message is " + s.getBytes().length + " bytes; " + sent + " bytes sent");
+        return sent;
     }
 }
