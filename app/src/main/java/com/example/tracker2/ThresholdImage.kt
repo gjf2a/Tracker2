@@ -1,6 +1,7 @@
 package com.example.tracker2
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Rect
 import java.util.*
 import kotlin.math.max
@@ -17,13 +18,11 @@ data class Point(val x: Int, val y: Int) {
     fun max(other: Point) = Point(max(x, other.x), max(y, other.y))
 }
 
-class ThresholdImage(src: Bitmap, pixelClassifier: (Bitmap, Int, Int) -> Boolean) {
-    val width = src.width
-    val height = src.height
+class ThresholdImage(val width: Int, val height: Int) {
     val totalPoints = width * height
     private val cells = BitSet(totalPoints)
 
-    init {
+    constructor(src: Bitmap, pixelClassifier: (Bitmap, Int, Int) -> Boolean) : this(src.width, src.height) {
         for (y in 0 until height) {
             for (x in 0 until width) {
                 set(x, y, pixelClassifier(src, x, y))
@@ -79,10 +78,18 @@ class ThresholdImage(src: Bitmap, pixelClassifier: (Bitmap, Int, Int) -> Boolean
                 }
             }
         }
-        return Blob(xTotal / count, yTotal / count, lowerRight.x - upperLeft.x, lowerRight.y - upperLeft.y, count)
+        return Blob(xTotal / count, yTotal / count, lowerRight.x - upperLeft.x, lowerRight.y - upperLeft.y, count, width, height)
     }
 }
 
-data class Blob(val x: Int, val y: Int, val boundingWidth: Int, val boundingHeight: Int, val count: Int) {
-    fun toRect() = Rect(x - boundingWidth / 2, y - boundingHeight / 2, x + boundingWidth / 2, y + boundingHeight / 2)
+fun scale(origValue: Int, origSize: Int, targetSize: Int) = targetSize * origValue / origSize
+
+data class Blob(val x: Int, val y: Int, val boundingWidth: Int, val boundingHeight: Int, val count: Int, val pixelWidth: Int, val pixelHeight: Int) {
+    fun toRect(canvas: Canvas): Rect {
+        val xStart = scale(x - boundingWidth / 2, pixelWidth, canvas.width)
+        val xEnd = scale(x + boundingWidth / 2, pixelWidth, canvas.width)
+        val yStart = scale(y - boundingHeight / 2, pixelHeight, canvas.height)
+        val yEnd = scale(y + boundingHeight / 2, pixelHeight, canvas.height)
+        return Rect(xStart, yStart, xEnd, yEnd)
+    }
 }
