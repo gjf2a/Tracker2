@@ -32,6 +32,7 @@ class TestActivity : FileAccessActivity() {
 
         test_to_robot.setOnClickListener {
             val intent = Intent(this@TestActivity, MainActivity::class.java)
+            if (command_tester.text.isEmpty()) {useOldText()}
             if (command_tester.text.isNotEmpty()) {
                 val command = command_tester.text.toString()
                 updateHistory(command)
@@ -41,12 +42,12 @@ class TestActivity : FileAccessActivity() {
         }
 
         use_old.setOnClickListener {
-            command_tester.text.clear()
-            command_tester.text.insert(0, old_commands.selectedItem.toString())
+            useOldText()
         }
 
         run_test.setOnClickListener {
             log_test.append("Interpreting...\n")
+            if (command_tester.text.isEmpty()) {useOldText()}
             val command = command_tester.text.toString()
 
             val result = interpret(command, outputDir, arrayListOf(DummyTarget()))
@@ -62,6 +63,11 @@ class TestActivity : FileAccessActivity() {
         }
 
         resetHistorySpinner()
+    }
+
+    private fun useOldText() {
+        command_tester.text.clear()
+        command_tester.text.insert(0, old_commands.selectedItem.toString())
     }
 
     private fun updateHistory(cmd: String) {

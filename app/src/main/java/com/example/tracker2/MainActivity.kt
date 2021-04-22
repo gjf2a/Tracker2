@@ -69,6 +69,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     var incoming = MessageHolder()
     private val messageQueue = ArrayBlockingQueue<String>(100)
     private var tts: TextToSpeech? = null
+    private val savedClassifiers = ArrayList<BitmapClassifier>()
 
     override fun onInit(status: Int) {
         // From: https://www.tutorialkart.com/kotlin-android/android-text-to-speech-kotlin-example/
@@ -118,10 +119,11 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
         show("Log\n")
         show("CPUS: ${Runtime.getRuntime().availableProcessors()}\n")
 
-        start_robot.setOnClickListener { safeSend(START) }
+        start_robot.setOnClickListener { safeSend(START); cameraSetup(viewFinder) }
         stop_robot.setOnClickListener { safeSend(STOP) }
-        
-        extra_overlay.setOnCheckedChangeListener { _, b -> if (b) {analyzer.getCurrentClassifier().showAlternative()} else {analyzer.getCurrentClassifier().showVideo()} }
+
+        // Maybe bring it back some other time. For now, it is a distraction.
+        //extra_overlay.setOnCheckedChangeListener { _, b -> if (b) {analyzer.getCurrentClassifier().showAlternative()} else {analyzer.getCurrentClassifier().showVideo()} }
 
         val intentHasCommand = intent.extras?.containsKey(COMMAND_FLAG)
         Log.i("MainActivity", "intentHasCommand: $intentHasCommand")
@@ -173,6 +175,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
 
     private fun addClassifier(classifier: BitmapClassifier) {
         val id = analyzer.addClassifier(classifier)
+        savedClassifiers.add(classifier)
         analyzer.resetFPSCalculation()
         show(classifier.assess())
         talker.receiveClassification("$id")
@@ -288,6 +291,9 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
 
             analyzer = BitmapAnalyzer(YuvBitmapConverter(applicationContext), this)
             analyzer.fpsListeners.add(this)
+            for (classifier in savedClassifiers) {
+                analyzer.addClassifier(classifier)
+            }
 
             val imageAnalyzer = ImageAnalysis.Builder()
                 .build()

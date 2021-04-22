@@ -76,11 +76,12 @@
         android:textColor="@color/colorPrimary"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/fps_info"
-        app:layout_constraintBottom_toTopOf="@id/extra_overlay"
+        app:layout_constraintBottom_toTopOf="@id/scroller"
         app:layout_constraintHeight_percent=".08"
         app:layout_constraintWidth_percent=".2"
         />
 
+    <!--
     <CheckBox
         android:id="@+id/extra_overlay"
         android:text="Replace Video"
@@ -92,6 +93,7 @@
         app:layout_constraintHeight_percent=".08"
         app:layout_constraintWidth_percent=".2"
         />
+     -->
 
     <ScrollView
         android:id="@+id/scroller"
@@ -99,7 +101,7 @@
         android:layout_height="0dp"
         app:layout_constraintWidth_default="percent"
         app:layout_constraintWidth_percent=".2"
-        app:layout_constraintHeight_percent=".76"
+        app:layout_constraintHeight_percent=".84"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent">
         <TextView

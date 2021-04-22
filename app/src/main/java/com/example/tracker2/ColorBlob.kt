@@ -10,23 +10,23 @@ class ColorBlob(images: ArrayList<Bitmap>, maxColors: Int) : BitmapClassifier() 
     val width = images[0].width
     val height = images[0].height
     val matches = KMeansClassifier(maxColors, ::colorSSD, makeLabeledColorsFrom(images), ::colorMean)
-    val overlayer = ThresholdOverlayer()
-    //val overlayer = BlobWindowOverlayer()
+    val overlayer1 = ThresholdOverlayer()
+    val overlayer2 = BlobWindowOverlayer()
 
     override fun classify(image: Bitmap) {
         val scaled = Bitmap.createScaledBitmap(image, width, height, false)!!
         val thresh = ThresholdImage(scaled) { bitmap, x, y -> matches.labelFor(tripleFrom(x, y, bitmap))}
         val defaultBlob = Blob(width/2, height/2, 1, 1, 1, width, height)
         val biggest = thresh.getBlobs().fold(defaultBlob) {biggest: Blob, blob: Blob -> if (blob.count > biggest.count) {blob} else {biggest}}
-        overlayer.thresholdImage = thresh
-        //overlayer.blob = biggest
+        overlayer1.thresholdImage = thresh
+        overlayer2.blob = biggest
         notifyListeners("${biggest.x} ${biggest.y}")
     }
 
     override fun assess() = "ColorBlob ready\n"
 
     override fun overlayers(): ArrayList<Overlayer> {
-        return arrayListOf(overlayer)
+        return arrayListOf(overlayer1, overlayer2)
     }
 }
 
