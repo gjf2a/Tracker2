@@ -34,6 +34,8 @@ import java.util.concurrent.ExecutorService
 const val START: String = "start"
 const val STOP: String = "stop"
 
+const val MAX_LOG_LENGTH = 1000
+
 open class FileAccessActivity : AppCompatActivity() {
 
     protected lateinit var outputDir: File
@@ -90,7 +92,12 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
             super.run()
             while (true) {
                 val message = messageQueue.take()
-                runOnUiThread { log.append(message) }
+                runOnUiThread {
+                    log.append(message)
+                    if (log.text.length > MAX_LOG_LENGTH) {
+                        log.text = log.text.subSequence(log.text.length - MAX_LOG_LENGTH, log.text.length)
+                    }
+                }
             }
         }
     }
