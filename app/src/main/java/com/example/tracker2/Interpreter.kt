@@ -179,7 +179,7 @@ fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroun
             val height = Integer.parseInt(command[7])
             val choices = ArrayList<Bitmap>()
             var start = 8
-            val maxJump = if (command.size >= 8 && command[8].startsWith("maxJump=")) {
+            val maxJump = if (command.size >= 9 && command[8].startsWith("maxJump=")) {
                 start = 9
                 Integer.parseInt(command[8].split("=")[1])
             } else {
