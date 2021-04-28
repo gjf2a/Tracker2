@@ -45,11 +45,16 @@ fun addColorsFrom(image: Bitmap, rect: Rect, labeledData: ArrayList<Pair<ColorTr
     }
 }
 
+enum class GroundlineValue {
+    CENTER, SIDES
+}
+
 open class Groundline<C : SimpleClassifier<ColorTriple, Boolean>>
     (
     images: ArrayList<Bitmap>,
     val minNotFloor: Int,
     val maxJumpSize: Int,
+    val returnValue: GroundlineValue,
     makeClassifier: (ArrayList<Pair<ColorTriple, Boolean>>) -> C
 ) : BitmapClassifier() {
     val isFloor = makeClassifier(makeLabeledColorsFrom(images))
@@ -59,10 +64,19 @@ open class Groundline<C : SimpleClassifier<ColorTriple, Boolean>>
 
     override fun classify(image: Bitmap) {
         val x2y = findFilteredGroundline(image)
-        val best = highestPoint(x2y)
-        overlayer.updateHeights(x2y, height, best.first)
-        Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
-        notifyListeners("${best.first} ${best.second}")
+        when (returnValue) {
+            GroundlineValue.CENTER -> {
+                val best = highestPoint(x2y)
+                overlayer.updateHeights(x2y, height, best.first)
+                Log.i("Groundline", "result (${width}x${height} ${x2y.size}): $x2y")
+                notifyListeners("${best.first} ${best.second}")
+            }
+            GroundlineValue.SIDES -> {
+                val best = highestPoint(x2y)
+                overlayer.updateHeights(x2y, height, best.first)
+                notifyListeners("${best.first} ${best.second} ${x2y[0]} ${x2y[x2y.size - 1]}")
+            }
+        }
     }
 
     fun removesNoise(): Boolean {
@@ -153,15 +167,15 @@ fun knnTrainer(labeled: ArrayList<Pair<ColorTriple, Boolean>>, k: Int): KNN<Colo
     return result
 }
 
-class GroundlineKnn(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJumpSize: Int)
-    : Groundline<KNN<ColorTriple, Boolean, Long>>(images, minNotFloor, maxJumpSize, { knnTrainer(it, k)}) {
+class GroundlineKnn(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJumpSize: Int, returnValue: GroundlineValue)
+    : Groundline<KNN<ColorTriple, Boolean, Long>>(images, minNotFloor, maxJumpSize, returnValue, { knnTrainer(it, k)}) {
     override fun assess(): String {
         return "Total knn examples: ${isFloor.numExamples()}\n"
     }
 }
 
-open class GroundlineKmeans(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJump: Int)
-    : Groundline<KMeansClassifier<ColorTriple, Boolean, Long>>(images, minNotFloor, maxJump,
+open class GroundlineKmeans(images: ArrayList<Bitmap>, k: Int, minNotFloor: Int, maxJump: Int, returnValue: GroundlineValue)
+    : Groundline<KMeansClassifier<ColorTriple, Boolean, Long>>(images, minNotFloor, maxJump, returnValue,
     { KMeansClassifier(k, ::colorSSD, it, ::colorMean) })
 
 class GroundlineOverlayer : Overlayer {

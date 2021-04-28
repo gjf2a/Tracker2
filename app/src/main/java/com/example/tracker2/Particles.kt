@@ -76,7 +76,7 @@ class ParticleFilterClassifier(
     cellsPerMeter: Double,
     meter1: CalibrationLine,
     meter2: CalibrationLine
-) : GroundlineKmeans(images, k, minNotFloor, maxJump) {
+) : GroundlineKmeans(images, k, minNotFloor, maxJump, GroundlineValue.CENTER) {
 
     val filter = ParticleFilter(numParticles, noiseRangeMin, noiseRangeMax, cellsPerMeter, PixelConverter(meter1, meter2, images[0].width, images[0].height))
     val mapOverlayer = MapOverlayer(GridMap(cellsPerMeter))

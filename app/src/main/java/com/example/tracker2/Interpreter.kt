@@ -62,8 +62,8 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
         } else {
             val command = suffixStartingAnyOf(listOf("cv ", "say "), msg.trim()).split(" ")
             if (command.isNotEmpty()) {
-                when {
-                    command[0] == "cv" -> {
+                when (command[0]) {
+                     "cv" -> {
                         when {
                             command.size == 6 && command[1] == "knn" -> interpretKnn(command, manager, listeners)
                             command.size == 7 && command[1] == "knn_brief" -> interpretBrief(command, manager, listeners)
@@ -76,8 +76,8 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
                             else -> simpleResult(CommandType.ERROR, "Unrecognized cv cmd: '$command'")
                         }
                     }
-                    command[0] == "say" -> relayResult(CommandType.SPEAK, command)
-                    command[0] == "msg" -> relayResult(CommandType.MESSAGE, command)
+                    "say" -> relayResult(CommandType.SPEAK, command)
+                    "msg" -> relayResult(CommandType.MESSAGE, command)
                     else -> {
                         simpleResult(CommandType.ERROR, "Unrecognized cmd type: '${command[0]}'")
                     }
@@ -165,7 +165,7 @@ fun interpretColorBlob(command: List<String>, manager: FileManager, listeners: L
 }
 
 fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroundline
-            (makeGroundline: (ArrayList<Bitmap>, Int, Int, Int)->G,
+            (makeGroundline: (ArrayList<Bitmap>, Int, Int, Int, GroundlineValue)->G,
              command: List<String>,
              manager: FileManager,
              listeners: List<ClassifierListener>): InterpreterResult {
@@ -185,10 +185,16 @@ fun <C: SimpleClassifier<ColorTriple, Boolean>, G: Groundline<C>> interpretGroun
             } else {
                 height + 1
             }
+            val returnValue = if (command.size >= start + 1 && command[start] == "sides") {
+                start += 1
+                GroundlineValue.SIDES
+            } else {
+                GroundlineValue.CENTER
+            }
             for (i in getPhotoNumbers(command, start, project, label, manager)) {
                 choices.add(manager.loadImage(project, label, i, width, height))
             }
-            val groundline = makeGroundline(choices, maxColors, minNotFloor, maxJump)
+            val groundline = makeGroundline(choices, maxColors, minNotFloor, maxJump, returnValue)
             groundline.addListeners(listeners)
             return createClassifier(groundline,
                 "Activating Groundline: $maxColors $project $label (${width}x${height})")
