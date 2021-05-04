@@ -35,10 +35,12 @@ const val START: String = "start"
 const val STOP: String = "stop"
 
 const val MAX_LOG_LENGTH = 1000
+const val HISTORY_FILE: String = "_history"
 
 open class FileAccessActivity : AppCompatActivity() {
 
     protected lateinit var outputDir: File
+    protected lateinit var history: CommandHistory
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +52,10 @@ open class FileAccessActivity : AppCompatActivity() {
             File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
         return if (mediaDir != null && mediaDir.exists())
             mediaDir else filesDir
+    }
+
+    protected fun setupHistory() {
+        history = CommandHistory("${outputDir.toString()}${File.separator}$HISTORY_FILE")
     }
 }
 
@@ -110,6 +116,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        setupHistory();
         messageThread.start()
 
         cameraSetup(viewFinder)
@@ -198,6 +205,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
                     interpreted.cmdType == CommandType.COMMENT -> show(interpreted.msg)
                     interpreted.cmdType == CommandType.CREATE_CLASSIFIER -> {
                         addClassifier(interpreted.classifier)
+                        history.add(message)
                         classifier_overlay.replaceOverlayers(interpreted.classifier.overlayers())
                     }
                     interpreted.cmdType == CommandType.PAUSE_CLASSIFIER -> {

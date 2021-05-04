@@ -142,10 +142,6 @@ public class ArduinoTalker implements ClassifierListener {
         return deviceOk;
     }
 
-    public String getStatusMessage() {
-        return statusMessage;
-    }
-
     private byte[] copyDefaultLineCoding() {
         byte[] bytes = new byte[CDC_DEFAULT_LINE_CODING.length];
         System.arraycopy(CDC_DEFAULT_LINE_CODING, 0, bytes, 0, bytes.length);
@@ -158,18 +154,11 @@ public class ArduinoTalker implements ClassifierListener {
         connection.close();
     }
 
-    public int transfer(UsbEndpoint endpoint, byte[] bytes, String label) {
+    // I tried synchronized on this. It doesn't help with the received-messages disaster, and it
+    // absolutely destroys performance.
+    public int transfer(UsbEndpoint endpoint, byte[] bytes) {
         if (connection != null) {
-            long time = System.currentTimeMillis();
-            Log.i(TAG, "Opened " + label + " connection" + "Attempting:");
-            int result = connection.bulkTransfer(endpoint, bytes, bytes.length, 50);
-            Log.i(TAG, "Closed connection; code " + result + ",  Time taken: " + (System.currentTimeMillis() - time));
-            statusMessage = label + ": Code: " + result;
-            for (int r : bytes) {
-                statusMessage += ";" + r;
-            }
-            Log.i(TAG, statusMessage);
-            return result;
+            return connection.bulkTransfer(endpoint, bytes, bytes.length, 50);
         } else {
             return 0;
         }
@@ -185,7 +174,7 @@ public class ArduinoTalker implements ClassifierListener {
     public int send(final byte[] bytes) {
         int bytesSent = 0;
         Log.i(TAG, "Attempting send");
-        bytesSent = transfer(host2Device, bytes, "Send");
+        bytesSent = transfer(host2Device, bytes);
         Log.i(TAG, "Send complete; " + bytesSent + " bytes sent");
         return bytesSent;
     }

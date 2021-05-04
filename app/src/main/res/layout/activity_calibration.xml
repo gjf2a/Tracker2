@@ -133,18 +133,18 @@
 
     <Button
         android:text="Up"
-        android:id="@+id/line_up"
+        android:id="@+id/rect_up"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintWidth_percent=".1"
         app:layout_constraintHeight_percent=".1"
         app:layout_constraintTop_toBottomOf="@id/line_choice"
-        app:layout_constraintRight_toLeftOf="@id/line_down"
+        app:layout_constraintRight_toLeftOf="@id/rect_down"
         />
 
     <Button
         android:text="Down"
-        android:id="@+id/line_down"
+        android:id="@+id/rect_down"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintWidth_percent=".1"
@@ -154,24 +154,88 @@
         />
 
     <Button
-        android:text="Widen"
-        android:id="@+id/line_wide"
+        android:text="Left"
+        android:id="@+id/rect_left"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintWidth_percent=".1"
         app:layout_constraintHeight_percent=".1"
-        app:layout_constraintTop_toBottomOf="@id/line_up"
-        app:layout_constraintRight_toLeftOf="@id/line_short"
+        app:layout_constraintTop_toBottomOf="@id/rect_up"
+        app:layout_constraintRight_toLeftOf="@id/rect_right"
         />
 
     <Button
-        android:text="Shorten"
-        android:id="@+id/line_short"
+        android:text="Right"
+        android:id="@+id/rect_right"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintWidth_percent=".1"
         app:layout_constraintHeight_percent=".1"
-        app:layout_constraintTop_toBottomOf="@id/line_down"
+        app:layout_constraintTop_toBottomOf="@id/rect_down"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <Button
+        android:text="Wider"
+        android:id="@+id/rect_wide"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".1"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/rect_left"
+        app:layout_constraintRight_toLeftOf="@id/rect_narrow"
+        />
+
+    <Button
+        android:text="Narrower"
+        android:id="@+id/rect_narrow"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".1"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/rect_right"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <Button
+        android:text="Taller"
+        android:id="@+id/rect_tall"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".1"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/rect_wide"
+        app:layout_constraintRight_toLeftOf="@id/rect_short"
+        />
+
+    <Button
+        android:text="Shorter"
+        android:id="@+id/rect_short"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".1"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/rect_narrow"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/calibration_x"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".2"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/rect_tall"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/calibration_y"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".2"
+        app:layout_constraintHeight_percent=".1"
+        app:layout_constraintTop_toBottomOf="@id/calibration_x"
         app:layout_constraintRight_toRightOf="parent"
         />
 
@@ -181,7 +245,7 @@
         android:layout_height="0dp"
         app:layout_constraintWidth_percent=".2"
         app:layout_constraintHeight_percent=".1"
-        app:layout_constraintTop_toBottomOf="@id/line_short"
+        app:layout_constraintTop_toBottomOf="@id/calibration_y"
         app:layout_constraintRight_toRightOf="parent"
         />
 

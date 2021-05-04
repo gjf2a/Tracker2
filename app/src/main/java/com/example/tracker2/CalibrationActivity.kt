@@ -87,10 +87,10 @@ class CalibrationActivity : FileAccessActivity() {
             startActivity(Intent(this@CalibrationActivity, ManagerActivity::class.java))
         }
 
-        line_up.setOnClickListener { update { it.up() } }
-        line_down.setOnClickListener { update {it.down()} }
-        line_short.setOnClickListener { update {it.shorten()} }
-        line_wide.setOnClickListener { update {it.widen()} }
+        rect_up.setOnClickListener { update { it.up() } }
+        rect_down.setOnClickListener { update {it.down()} }
+        rect_narrow.setOnClickListener { update {it.shorten()} }
+        rect_wide.setOnClickListener { update {it.widen()} }
 
         line_choice.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(p0: AdapterView<*>?) {}

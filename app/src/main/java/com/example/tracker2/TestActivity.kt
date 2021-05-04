@@ -12,17 +12,14 @@ class DummyTarget : ClassifierListener {
 }
 
 const val COMMAND_FLAG: String = "COMMAND"
-const val HISTORY_FILE: String = "_history"
 
 class TestActivity : FileAccessActivity() {
-
-    private lateinit var history: CommandHistory
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_test)
 
-        history = CommandHistory("${outputDir.toString()}${File.separator}$HISTORY_FILE")
+        setupHistory();
 
         log_test.append("Log\n")
 
