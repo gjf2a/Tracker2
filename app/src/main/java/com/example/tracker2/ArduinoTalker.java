@@ -11,6 +11,7 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
+
 /**
  * Created by gabriel on 5/25/18.
  */
@@ -188,9 +189,6 @@ public class ArduinoTalker implements ClassifierListener {
         if (!s.endsWith("\n")) {
             s += "\n";
         }
-        Log.i(TAG, "Sending: '" + s + "'");
-        int sent = send(s.getBytes());
-        Log.i(TAG, "Message is " + s.getBytes().length + " bytes; " + sent + " bytes sent");
-        return sent;
+        return send(s.getBytes());
     }
 }

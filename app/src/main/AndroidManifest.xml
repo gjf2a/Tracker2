@@ -13,7 +13,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".RectangleCalibrationActivity"></activity>
+        <activity android:name=".LogViewActivity"></activity>
+        <activity android:name=".RectangleCalibrationActivity" />
         <activity android:name=".CalibrationActivity" />
         <activity
             android:name=".TestActivity"

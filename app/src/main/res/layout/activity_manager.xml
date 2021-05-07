@@ -132,7 +132,7 @@
         android:id="@+id/go_to_image_button"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintWidth_percent=".12"
         app:layout_constraintHeight_percent=".2"
         android:text="Robot View"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -149,7 +149,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintWidth_percent=".12"
         app:layout_constraintHeight_percent=".2"/>
 
     <Button
@@ -169,7 +169,7 @@
         android:id="@+id/go_to_project_label"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintWidth_percent=".12"
         app:layout_constraintHeight_percent=".2"
         android:text="Edit Projects/Labels"
         app:layout_constraintLeft_toRightOf="@id/go_to_test_button"
@@ -182,10 +182,23 @@
         android:id="@+id/go_to_calibration"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintWidth_percent=".15"
+        app:layout_constraintWidth_percent=".12"
         app:layout_constraintHeight_percent=".2"
         android:text="Calibration"
         app:layout_constraintLeft_toRightOf="@id/go_to_project_label"
+        app:layout_constraintRight_toLeftOf="@id/view_log"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:elevation="2dp"
+        />
+
+    <Button
+        android:id="@+id/view_log"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent=".12"
+        app:layout_constraintHeight_percent=".2"
+        android:text="View Log"
+        app:layout_constraintLeft_toRightOf="@id/go_to_calibration"
         app:layout_constraintRight_toLeftOf="@id/delete_picture_button"
         app:layout_constraintBottom_toBottomOf="parent"
         android:elevation="2dp"

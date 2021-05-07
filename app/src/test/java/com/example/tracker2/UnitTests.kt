@@ -1,5 +1,6 @@
 package com.example.tracker2
 
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.io.FileWriter
@@ -167,8 +168,7 @@ class UnitTests {
 
     @Test
     fun historyTest() {
-        val file = File("testfile")
-        val history = CommandHistory(file.name)
+        val history = CommandHistory(File("."))
         history.add(" ")
         for (i in 1..10) {
             history.add(" ")
@@ -187,10 +187,10 @@ class UnitTests {
         assert(sorted[1] == "three")
         assert(sorted[2] == "one")
 
-        val history2 = CommandHistory(file.name)
+        val history2 = CommandHistory(File("."))
         assert(history == history2)
 
-        file.delete()
+        history.eraseHistory()
     }
 
     @Test
@@ -264,6 +264,21 @@ class UnitTests {
         assert(solveForX(3, 1, 1, 2, 2) == 3.0)
     }
 
+    @Test
+    fun testLog() {
+        File(LOG_NAME).delete()
+        val logger = Logger(File("."))
+        logger.log("one")
+        logger.log("two")
+        val check = Scanner(File(LOG_NAME))
+        val line1 = check.nextLine()
+        val line2 = check.nextLine()
+        assert(line1 == "[one]")
+        assert(line2 == "[two]")
+        check.close()
+    }
+
+    @Ignore("This doesn't really test anything, but it was useful for exploring what the code does.")
     @Test
     fun interpretTest() {
         System.out.println("path: ${File(".").absolutePath}")

@@ -13,7 +13,8 @@ class HistoryItem(val command: String, var numUses: Int = 1) {
     override fun hashCode(): Int = command.hashCode() + numUses
 }
 
-class CommandHistory(private val filename: String) {
+class CommandHistory(outputDir: File) {
+    private val filename = "$outputDir${File.separator}$HISTORY_FILE"
     private val history = HashMap<String,HistoryItem>()
 
     init {
@@ -25,6 +26,10 @@ class CommandHistory(private val filename: String) {
                 history[line[0]] = HistoryItem(line[0], Integer.parseInt(line[1]))
             }
         }
+    }
+
+    fun eraseHistory() {
+        File(filename).delete()
     }
 
     override fun equals(other: Any?): Boolean = (other is CommandHistory) && history == other.history && filename == other.filename
