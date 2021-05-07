@@ -169,10 +169,6 @@ class ManagerActivity : FileAccessActivity() {
             startActivity(Intent(this@ManagerActivity, CalibrationActivity::class.java))
         }
 
-        view_log.setOnClickListener {
-            startActivity(Intent(this@ManagerActivity, LogViewActivity::class.java))
-        }
-
         move_picture_button.setOnClickListener {
             if (photos.files.currentFile() != null) {
                 photos.manager.moveFileTo(photos.files.currentFile()!!, photos.projectName(), photos.labelName())

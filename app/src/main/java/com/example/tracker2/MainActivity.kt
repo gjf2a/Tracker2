@@ -78,7 +78,6 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     private val messageQueue = ArrayBlockingQueue<String>(100)
     private var tts: TextToSpeech? = null
     private val savedClassifiers = ArrayList<BitmapClassifier>()
-    lateinit var logger: Logger
 
     override fun onInit(status: Int) {
         // From: https://www.tutorialkart.com/kotlin-android/android-text-to-speech-kotlin-example/
@@ -116,8 +115,6 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        logger = Logger(outputDir)
-        logger.clear()
         setupHistory();
         messageThread.start()
 
@@ -156,7 +153,7 @@ class MainActivity : FileAccessActivity(), TextListener, MessageReceiver, FPSRec
         show("Attempting to connect...\n")
         val arduino = ArduinoTalker(this@MainActivity.getSystemService(Context.USB_SERVICE) as UsbManager)
         if (arduino.connected()) {
-            reader = TextReader(arduino, logger)
+            reader = TextReader(arduino)
             talker = arduino
             show("Connected\n")
             reader.addListener(this)

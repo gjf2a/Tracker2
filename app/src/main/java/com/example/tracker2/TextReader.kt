@@ -2,7 +2,7 @@ package com.example.tracker2
 
 const val BUFFER_SIZE = 200;
 
-class TextReader(var talker: ArduinoTalker, val logger: Logger) : Thread() {
+class TextReader(var talker: ArduinoTalker) : Thread() {
     var buffer = ByteArray(BUFFER_SIZE)
     var listeners = ArrayList<TextListener>()
 
@@ -17,9 +17,7 @@ class TextReader(var talker: ArduinoTalker, val logger: Logger) : Thread() {
             if (received > 0) {
                 val line = String(buffer.copyOfRange(0, received))
                 accumulated += line
-                logger.log("Incoming: $line")
                 if (accumulated.endsWith("\n")) {
-                    logger.log("Reporting: $accumulated")
                     for (listener in listeners) {
                         listener.receive(accumulated)
                     }
