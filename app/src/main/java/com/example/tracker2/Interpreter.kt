@@ -79,7 +79,6 @@ fun interpret(msg: String, outputDir: File, listeners: List<ClassifierListener>)
                     "say" -> relayResult(CommandType.SPEAK, command)
                     "msg" -> relayResult(CommandType.MESSAGE, command)
                     else -> simpleResult(CommandType.ERROR, "Unrecognized msg: [$msg]")
-                    //else -> simpleResult(CommandType.ERROR, "Unrecognized cmd type: '${command[0]}'")
                 }
             } else {
                 simpleResult(CommandType.ERROR,"Confusing msg: '$msg'")
