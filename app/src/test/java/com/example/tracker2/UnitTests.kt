@@ -263,6 +263,16 @@ class UnitTests {
         assert(solveForX(0, 1, 2, 1, 3) == 1.0)
         assert(solveForX(3, 1, 1, 2, 2) == 3.0)
     }
+
+    @Test
+    fun interpretTest() {
+        System.out.println("path: ${File(".").absolutePath}")
+
+        val result = interpret("#hello", File("."), ArrayList())
+        System.out.println(result)
+        val result2 = interpret("", File("."), ArrayList())
+        System.out.println(result2)
+    }
 }
 
 const val resizeTestMap = """................
