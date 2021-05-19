@@ -68,8 +68,8 @@ class UnitTests {
 
     fun genericKMeansTest(samples: ArrayList<Int>, targetMeans: ArrayList<Int>) {
         val means = KMeans(targetMeans.size, ::intDist, samples) { it.sum() / it.size}
-        for (target in means.means) {
-            assert(targetMeans.contains(target))
+        for (target in targetMeans) {
+            assert(means.means.contains(target))
         }
     }
 
