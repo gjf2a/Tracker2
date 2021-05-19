@@ -58,9 +58,18 @@ class UnitTests {
 
     @Test
     fun kmeansTest() {
-        val means = KMeans(4, ::intDist, kmeansSamples) { it.sum() / it.size}
-        for (target in arrayOf(2, 1002, 2002, 3002)) {
-            assert(means.contains(target))
+        genericKMeansTest(kmeansSamples, arrayListOf(2, 1002, 2002, 3002))
+    }
+
+    @Test
+    fun kmeansTest2() {
+        genericKMeansTest(arrayListOf(2, 3, 4, 10, 11, 12, 24, 25, 26, 35, 40, 45), arrayListOf(3, 11, 25, 40))
+    }
+
+    fun genericKMeansTest(samples: ArrayList<Int>, targetMeans: ArrayList<Int>) {
+        val means = KMeans(targetMeans.size, ::intDist, samples) { it.sum() / it.size}
+        for (target in means.means) {
+            assert(targetMeans.contains(target))
         }
     }
 
